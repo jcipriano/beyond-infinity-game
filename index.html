@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beyond Infinity</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        touch-action: none;
+      }
+      #hud {
+        position: fixed;
+        top: 12px;
+        left: 16px;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+        font-size: 22px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+        user-select: none;
+      }
+      #instructions {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        color: rgba(255, 255, 255, 0.75);
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+        user-select: none;
+      }
+      #gameOver {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font-family: system-ui, sans-serif;
+        text-align: center;
+      }
+      #gameOver.hidden {
+        display: none;
+      }
+      #gameOver h1 {
+        margin: 0;
+        font-size: 40px;
+      }
+      #gameOver p {
+        margin: 0;
+        font-size: 18px;
+        opacity: 0.85;
+      }
+      #restartButton {
+        margin-top: 8px;
+        padding: 10px 24px;
+        font-size: 16px;
+        font-family: inherit;
+        border: none;
+        border-radius: 6px;
+        background: #e08c26;
+        color: #fff;
+        cursor: pointer;
+      }
+      #restartButton:hover {
+        background: #f29b34;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="hud">Score: <span id="score">0</span></div>
+    <div id="instructions">A/D or ←/→ to change lanes · Space to jump</div>
+    <div id="gameOver" class="hidden">
+      <h1>Game Over</h1>
+      <p>Score: <span id="finalScore">0</span></p>
+      <button id="restartButton">Restart (R)</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
