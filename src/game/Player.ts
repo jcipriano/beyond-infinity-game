@@ -7,6 +7,7 @@ import {
   LANE_LERP_SPEED,
   LANE_X_POSITIONS,
   PLAYER_RADIUS,
+  ROLL_VISUAL_DAMPING,
 } from "./constants";
 import { settings } from "../settings";
 
@@ -23,7 +24,7 @@ export class Player {
    * @param scene - The Babylon scene to create the player mesh in.
    */
   constructor(scene: Scene) {
-    this.mesh = MeshBuilder.CreateSphere("player", { diameter: PLAYER_RADIUS * 2 }, scene);
+    this.mesh = MeshBuilder.CreateSphere("player", { diameter: PLAYER_RADIUS * 2, segments: 12 }, scene);
     this.mesh.position.set(LANE_X_POSITIONS[this.laneIndex], GROUND_Y + PLAYER_RADIUS, 0);
 
     const material = new StandardMaterial("playerMat", scene);
@@ -43,10 +44,11 @@ export class Player {
   }
 
   /**
-   * Lerps toward the target lane and applies gravity/jump physics each frame.
+   * Lerps toward the target lane, applies gravity/jump physics, and rolls the ball each frame.
    * @param deltaSeconds - Time elapsed since the last frame, in seconds.
+   * @param speed - Current forward travel speed in units per second.
    */
-  update(deltaSeconds: number): void {
+  update(deltaSeconds: number, speed: number): void {
     const targetX = LANE_X_POSITIONS[this.laneIndex];
     this.mesh.position.x += (targetX - this.mesh.position.x) * Math.min(1, LANE_LERP_SPEED * deltaSeconds);
 
@@ -57,6 +59,8 @@ export class Player {
       this.verticalVelocity = 0;
       this.grounded = true;
     }
+
+    this.mesh.rotation.x += (speed / PLAYER_RADIUS) * ROLL_VISUAL_DAMPING * deltaSeconds;
   }
 
   /**

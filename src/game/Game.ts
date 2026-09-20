@@ -70,7 +70,7 @@ export class Game {
     const speed = Math.min(BASE_SPEED + this.elapsedSeconds * SPEED_RAMP, MAX_SPEED);
     this.distance += speed * deltaSeconds;
 
-    this.player.update(deltaSeconds);
+    this.player.update(deltaSeconds, speed);
     this.track.update(deltaSeconds, speed);
     const gemsCollected = this.collectibles.update(deltaSeconds, speed, this.player.mesh.position);
     const collided = this.obstacles.update(deltaSeconds, speed, this.player.mesh.position);
