@@ -59,7 +59,7 @@ export class Explosion {
     this.particleSystem.direction2 = new Vector3(1, 1, 1);
     this.particleSystem.minEmitBox = Vector3.Zero();
     this.particleSystem.maxEmitBox = Vector3.Zero();
-    this.particleSystem.gravity = new Vector3(0, -20, 0);
+    this.particleSystem.gravity = new Vector3(0, -5, 0);
     this.particleSystem.emitRate = 0;
     this.particleSystem.start();
   }

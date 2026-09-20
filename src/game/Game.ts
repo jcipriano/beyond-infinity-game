@@ -24,6 +24,7 @@ export class Game {
   private readonly explosion: Explosion;
 
   private readonly scoreLabel = document.getElementById("score");
+  private readonly timerLabel = document.getElementById("timer");
   private readonly gameOverOverlay = document.getElementById("gameOver");
   private readonly finalScoreLabel = document.getElementById("finalScore");
 
@@ -81,6 +82,7 @@ export class Game {
    */
   private update(deltaSeconds: number): void {
     this.elapsedSeconds += deltaSeconds;
+    this.updateTimerLabel();
     const speed = Math.min(BASE_SPEED + this.elapsedSeconds * SPEED_RAMP, MAX_SPEED);
     this.distance += speed * deltaSeconds;
 
@@ -100,6 +102,16 @@ export class Game {
   private updateScoreLabel(): void {
     if (!this.scoreLabel) return;
     this.scoreLabel.textContent = String(Math.floor(this.distance) + this.gemScore);
+  }
+
+  // Renders elapsed run time as minutes:seconds.tenths into the HUD.
+  private updateTimerLabel(): void {
+    if (!this.timerLabel) return;
+    const totalSeconds = Math.floor(this.elapsedSeconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const tenths = Math.floor((this.elapsedSeconds - totalSeconds) * 10);
+    this.timerLabel.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}.${tenths}`;
   }
 
   // Switches to the game-over state and shatters the player, revealing the overlay after a delay.
@@ -123,6 +135,7 @@ export class Game {
     this.distance = 0;
     this.gemScore = 0;
     this.updateScoreLabel();
+    this.updateTimerLabel();
     this.gameOverOverlay?.classList.add("hidden");
 
     this.player.reset();
