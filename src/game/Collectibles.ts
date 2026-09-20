@@ -1,5 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { DESPAWN_Z, SPAWN_Z, randomLaneX } from "./constants";
+import { settings } from "../settings";
 
 const GEM_COUNT = 10;
 const MIN_GAP = 8;
@@ -20,6 +21,7 @@ export class CollectibleField {
     const material = new StandardMaterial("gemMat", scene);
     material.diffuseColor = new Color3(0.2, 0.8, 0.9);
     material.emissiveColor = new Color3(0.05, 0.3, 0.35);
+    material.wireframe = settings.wireframe;
 
     for (let i = 0; i < GEM_COUNT; i++) {
       const gem = MeshBuilder.CreatePolyhedron(`gem${i}`, { type: 1, size: 0.5 }, this.scene);

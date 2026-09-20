@@ -1,5 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { DESPAWN_Z, PLAYER_RADIUS, SPAWN_Z, randomLaneX } from "./constants";
+import { settings } from "../settings";
 
 const OBSTACLE_COUNT = 8;
 const MIN_GAP = 10;
@@ -22,6 +23,7 @@ export class ObstacleField {
   constructor(scene: Scene) {
     const material = new StandardMaterial("obstacleMat", scene);
     material.diffuseColor = new Color3(0.75, 0.15, 0.15);
+    material.wireframe = settings.wireframe;
 
     for (let i = 0; i < OBSTACLE_COUNT; i++) {
       const obstacle = MeshBuilder.CreateBox(

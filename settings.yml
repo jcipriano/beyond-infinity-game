@@ -1,0 +1,4 @@
+# Game settings. Edit these values to change how the game looks/behaves.
+
+# Render every 3D object (player, ground, obstacles, gems) as a wireframe.
+wireframe: true

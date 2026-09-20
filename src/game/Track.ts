@@ -1,5 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { DESPAWN_Z } from "./constants";
+import { settings } from "../settings";
 
 const TILE_LENGTH = 40;
 const TILE_WIDTH = 12;
@@ -16,6 +17,7 @@ export class Track {
     const material = new StandardMaterial("trackMat", scene);
     material.diffuseColor = new Color3(0.15, 0.35, 0.2);
     material.specularColor = Color3.Black();
+    material.wireframe = settings.wireframe;
 
     for (let i = 0; i < TILE_COUNT; i++) {
       const tile = MeshBuilder.CreateGround(`tile${i}`, { width: TILE_WIDTH, height: TILE_LENGTH }, scene);

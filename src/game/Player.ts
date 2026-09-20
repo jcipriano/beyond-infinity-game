@@ -8,6 +8,7 @@ import {
   LANE_X_POSITIONS,
   PLAYER_RADIUS,
 } from "./constants";
+import { settings } from "../settings";
 
 const START_LANE = 1;
 
@@ -27,6 +28,7 @@ export class Player {
 
     const material = new StandardMaterial("playerMat", scene);
     material.diffuseColor = new Color3(0.9, 0.55, 0.15);
+    material.wireframe = settings.wireframe;
     this.mesh.material = material;
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event.key.toLowerCase()));
