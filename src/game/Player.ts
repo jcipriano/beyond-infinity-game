@@ -1,5 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import {
+  EDGE_ANGLE_EPSILON,
   GRAVITY,
   GROUND_Y,
   JUMP_SPEED,
@@ -27,10 +28,17 @@ export class Player {
     this.mesh = MeshBuilder.CreateSphere("player", { diameter: PLAYER_RADIUS * 2, segments: 12 }, scene);
     this.mesh.position.set(LANE_X_POSITIONS[this.laneIndex], GROUND_Y + PLAYER_RADIUS, 0);
 
+    const color = new Color3(1, 1, 1);
     const material = new StandardMaterial("playerMat", scene);
-    material.diffuseColor = new Color3(0.9, 0.55, 0.15);
-    material.wireframe = settings.wireframe;
+    material.diffuseColor = color;
+    material.alpha = settings.wireframe ? settings.opacity : 1;
     this.mesh.material = material;
+
+    if (settings.wireframe) {
+      this.mesh.enableEdgesRendering(EDGE_ANGLE_EPSILON);
+      this.mesh.edgesWidth = settings.edgeWidth;
+      this.mesh.edgesColor.set(color.r, color.g, color.b, 1);
+    }
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event.key.toLowerCase()));
   }

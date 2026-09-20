@@ -2,6 +2,7 @@ import { Color4, Engine, HemisphericLight, Scene, Vector3 } from "@babylonjs/cor
 import { ChaseCamera } from "./ChaseCamera";
 import { CollectibleField } from "./Collectibles";
 import { BASE_SPEED, MAX_SPEED, SPEED_RAMP } from "./constants";
+import { Explosion } from "./Explosion";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
 import { Track } from "./Track";
@@ -9,6 +10,7 @@ import { Track } from "./Track";
 type RunState = "running" | "gameover";
 
 const GEM_SCORE = 10;
+const GAME_OVER_DELAY_MS = 1000;
 
 export class Game {
   private readonly engine: Engine;
@@ -18,6 +20,7 @@ export class Game {
   private readonly obstacles: ObstacleField;
   private readonly collectibles: CollectibleField;
   private readonly camera: ChaseCamera;
+  private readonly explosion: Explosion;
 
   private readonly scoreLabel = document.getElementById("score");
   private readonly gameOverOverlay = document.getElementById("gameOver");
@@ -27,6 +30,7 @@ export class Game {
   private elapsedSeconds = 0;
   private distance = 0;
   private gemScore = 0;
+  private gameOverTimeoutId: number | undefined;
 
   /**
    * Builds the engine, scene, and all game systems, and wires up restart input.
@@ -44,10 +48,12 @@ export class Game {
     this.obstacles = new ObstacleField(this.scene);
     this.collectibles = new CollectibleField(this.scene);
     this.camera = new ChaseCamera(this.scene);
+    this.explosion = new Explosion(this.scene);
 
     window.addEventListener("resize", () => this.engine.resize());
     window.addEventListener("keydown", (event) => {
-      if (this.state === "gameover" && event.key.toLowerCase() === "r") this.restart();
+      if (event.key.toLowerCase() !== "r") return;
+      if (this.state === "gameover" && !this.gameOverOverlay?.classList.contains("hidden")) this.restart();
     });
     document.getElementById("restartButton")?.addEventListener("click", () => this.restart());
   }
@@ -57,6 +63,7 @@ export class Game {
     this.engine.runRenderLoop(() => {
       const deltaSeconds = Math.min(this.engine.getDeltaTime() / 1000, 0.1);
       if (this.state === "running") this.update(deltaSeconds);
+      this.explosion.update(deltaSeconds);
       this.scene.render();
     });
   }
@@ -88,15 +95,23 @@ export class Game {
     this.scoreLabel.textContent = String(Math.floor(this.distance) + this.gemScore);
   }
 
-  // Switches to the game-over state and shows the final score overlay.
+  // Switches to the game-over state and shatters the player, revealing the overlay after a delay.
   private endRun(): void {
     this.state = "gameover";
+    this.explosion.trigger(this.player.mesh);
+    this.player.mesh.isVisible = false;
+    this.gameOverTimeoutId = window.setTimeout(() => this.showGameOverOverlay(), GAME_OVER_DELAY_MS);
+  }
+
+  // Shows the final score overlay, once the post-collision delay has elapsed.
+  private showGameOverOverlay(): void {
     if (this.finalScoreLabel) this.finalScoreLabel.textContent = this.scoreLabel?.textContent ?? "0";
     this.gameOverOverlay?.classList.remove("hidden");
   }
 
   // Resets score, systems, and state so a new run starts from scratch.
   private restart(): void {
+    window.clearTimeout(this.gameOverTimeoutId);
     this.elapsedSeconds = 0;
     this.distance = 0;
     this.gemScore = 0;
@@ -104,9 +119,11 @@ export class Game {
     this.gameOverOverlay?.classList.add("hidden");
 
     this.player.reset();
+    this.player.mesh.isVisible = true;
     this.track.reset();
     this.obstacles.reset();
     this.collectibles.reset();
+    this.explosion.reset();
 
     this.state = "running";
   }

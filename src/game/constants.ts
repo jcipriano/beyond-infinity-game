@@ -17,6 +17,11 @@ export const SPEED_RAMP = 0.15;
 export const SPAWN_Z = 60;
 export const DESPAWN_Z = -6;
 
+// Edge-detection angle threshold (as a dot product of adjacent face normals) for enableEdgesRendering.
+// Very close to 1 so even the shallow angles between a low-poly sphere's triangles count as edges,
+// reproducing a full wireframe grid instead of only the sharpest creases.
+export const EDGE_ANGLE_EPSILON = 0.9999;
+
 // Picks a random lane's x position, used to place obstacles and gems.
 export function randomLaneX(): number {
   const index = Math.floor(Math.random() * LANE_X_POSITIONS.length);

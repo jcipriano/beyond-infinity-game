@@ -1,5 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
-import { DESPAWN_Z, SPAWN_Z, randomLaneX } from "./constants";
+import { DESPAWN_Z, EDGE_ANGLE_EPSILON, SPAWN_Z, randomLaneX } from "./constants";
+import { Explosion } from "./Explosion";
 import { settings } from "../settings";
 
 const GEM_COUNT = 10;
@@ -11,6 +12,7 @@ const SPIN_SPEED = 3;
 
 export class CollectibleField {
   private readonly gems: Mesh[] = [];
+  private readonly explosion: Explosion;
   private nextSpawnZ = SPAWN_Z + MIN_GAP;
 
   /**
@@ -18,15 +20,22 @@ export class CollectibleField {
    * @param scene - The Babylon scene to create the gem meshes in.
    */
   constructor(private readonly scene: Scene) {
+    this.explosion = new Explosion(scene);
+    const color = new Color3(1, 0.85, 0.1);
     const material = new StandardMaterial("gemMat", scene);
-    material.diffuseColor = new Color3(0.2, 0.8, 0.9);
-    material.emissiveColor = new Color3(0.05, 0.3, 0.35);
-    material.wireframe = settings.wireframe;
+    material.diffuseColor = color;
+    material.emissiveColor = new Color3(0.35, 0.3, 0.05);
+    material.alpha = settings.wireframe ? settings.opacity : 1;
 
     for (let i = 0; i < GEM_COUNT; i++) {
       const gem = MeshBuilder.CreatePolyhedron(`gem${i}`, { type: 1, size: 0.5 }, this.scene);
       gem.material = material;
       gem.position.set(randomLaneX(), GEM_HEIGHT, this.nextSpawnZ);
+      if (settings.wireframe) {
+        gem.enableEdgesRendering(EDGE_ANGLE_EPSILON);
+        gem.edgesWidth = settings.edgeWidth;
+        gem.edgesColor.set(color.r, color.g, color.b, 1);
+      }
       this.nextSpawnZ += randomGap();
       this.gems.push(gem);
     }
@@ -39,6 +48,7 @@ export class CollectibleField {
       gem.position.set(randomLaneX(), GEM_HEIGHT, this.nextSpawnZ);
       this.nextSpawnZ += randomGap();
     }
+    this.explosion.reset();
   }
 
   /**
@@ -56,11 +66,13 @@ export class CollectibleField {
 
       if (Vector3.Distance(gem.position, playerPosition) < PICKUP_RADIUS) {
         collected += 1;
+        this.explosion.trigger(gem);
         this.respawn(gem);
       } else if (gem.position.z < DESPAWN_Z) {
         this.respawn(gem);
       }
     }
+    this.explosion.update(deltaSeconds);
     return collected;
   }
 

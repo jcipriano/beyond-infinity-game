@@ -1,5 +1,5 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
-import { DESPAWN_Z } from "./constants";
+import { DESPAWN_Z, EDGE_ANGLE_EPSILON } from "./constants";
 import { settings } from "../settings";
 
 const TILE_LENGTH = 40;
@@ -14,15 +14,21 @@ export class Track {
    * @param scene - The Babylon scene to create the tiles in.
    */
   constructor(scene: Scene) {
+    const color = new Color3(0.15, 0.35, 0.85);
     const material = new StandardMaterial("trackMat", scene);
-    material.diffuseColor = new Color3(0.15, 0.35, 0.2);
+    material.diffuseColor = color;
     material.specularColor = Color3.Black();
-    material.wireframe = settings.wireframe;
+    material.alpha = settings.wireframe ? settings.opacity : 1;
 
     for (let i = 0; i < TILE_COUNT; i++) {
       const tile = MeshBuilder.CreateGround(`tile${i}`, { width: TILE_WIDTH, height: TILE_LENGTH }, scene);
       tile.material = material;
       tile.position.z = i * TILE_LENGTH;
+      if (settings.wireframe) {
+        tile.enableEdgesRendering(EDGE_ANGLE_EPSILON);
+        tile.edgesWidth = settings.edgeWidth;
+        tile.edgesColor.set(color.r, color.g, color.b, 1);
+      }
       this.tiles.push(tile);
     }
   }

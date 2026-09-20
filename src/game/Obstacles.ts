@@ -1,5 +1,5 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
-import { DESPAWN_Z, PLAYER_RADIUS, SPAWN_Z, randomLaneX } from "./constants";
+import { DESPAWN_Z, EDGE_ANGLE_EPSILON, PLAYER_RADIUS, SPAWN_Z, randomLaneX } from "./constants";
 import { settings } from "../settings";
 
 const OBSTACLE_COUNT = 8;
@@ -21,9 +21,10 @@ export class ObstacleField {
    * @param scene - The Babylon scene to create the obstacle meshes in.
    */
   constructor(scene: Scene) {
+    const color = new Color3(0.75, 0.15, 0.15);
     const material = new StandardMaterial("obstacleMat", scene);
-    material.diffuseColor = new Color3(0.75, 0.15, 0.15);
-    material.wireframe = settings.wireframe;
+    material.diffuseColor = color;
+    material.alpha = settings.wireframe ? settings.opacity : 1;
 
     for (let i = 0; i < OBSTACLE_COUNT; i++) {
       const obstacle = MeshBuilder.CreateBox(
@@ -33,6 +34,11 @@ export class ObstacleField {
       );
       obstacle.material = material;
       obstacle.position.set(randomLaneX(), OBSTACLE_HEIGHT / 2, this.nextSpawnZ);
+      if (settings.wireframe) {
+        obstacle.enableEdgesRendering(EDGE_ANGLE_EPSILON);
+        obstacle.edgesWidth = settings.edgeWidth;
+        obstacle.edgesColor.set(color.r, color.g, color.b, 1);
+      }
       this.nextSpawnZ += randomGap();
       this.obstacles.push(obstacle);
     }
