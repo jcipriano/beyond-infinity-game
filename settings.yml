@@ -8,3 +8,12 @@ opacity: 0.75
 
 # Line thickness for the wireframe edge outlines.
 edgeWidth: 1
+
+# Test mode, for debugging: spawn only one object type and/or skip dimming the game-over overlay
+# so the scene stays inspectable after a collision. Leave enabled: false for normal play.
+testMode:
+  enabled: false
+  # What to spawn: "gems", "obstacles", or "both".
+  spawn: both
+  # Whether the game-over overlay darkens the scene behind it.
+  dimGameOver: true

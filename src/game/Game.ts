@@ -6,6 +6,7 @@ import { Explosion } from "./Explosion";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
 import { Track } from "./Track";
+import { settings } from "../settings";
 
 type RunState = "running" | "gameover";
 
@@ -17,8 +18,8 @@ export class Game {
   private readonly scene: Scene;
   private readonly track: Track;
   private readonly player: Player;
-  private readonly obstacles: ObstacleField;
-  private readonly collectibles: CollectibleField;
+  private readonly obstacles: ObstacleField | null;
+  private readonly collectibles: CollectibleField | null;
   private readonly camera: ChaseCamera;
   private readonly explosion: Explosion;
 
@@ -45,10 +46,16 @@ export class Game {
 
     this.track = new Track(this.scene);
     this.player = new Player(this.scene);
-    this.obstacles = new ObstacleField(this.scene);
-    this.collectibles = new CollectibleField(this.scene);
+    const spawnObstacles = !settings.testMode.enabled || settings.testMode.spawn !== "gems";
+    const spawnGems = !settings.testMode.enabled || settings.testMode.spawn !== "obstacles";
+    this.obstacles = spawnObstacles ? new ObstacleField(this.scene) : null;
+    this.collectibles = spawnGems ? new CollectibleField(this.scene) : null;
     this.camera = new ChaseCamera(this.scene);
     this.explosion = new Explosion(this.scene);
+
+    if (settings.testMode.enabled && !settings.testMode.dimGameOver) {
+      this.gameOverOverlay?.classList.add("noDim");
+    }
 
     window.addEventListener("resize", () => this.engine.resize());
     window.addEventListener("keydown", (event) => {
@@ -79,8 +86,8 @@ export class Game {
 
     this.player.update(deltaSeconds, speed);
     this.track.update(deltaSeconds, speed);
-    const gemsCollected = this.collectibles.update(deltaSeconds, speed, this.player.mesh.position);
-    const collided = this.obstacles.update(deltaSeconds, speed, this.player.mesh.position);
+    const gemsCollected = this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position) ?? 0;
+    const collided = this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position) ?? false;
     this.camera.update(this.player.mesh.position, deltaSeconds);
 
     this.gemScore += gemsCollected * GEM_SCORE;
@@ -121,8 +128,8 @@ export class Game {
     this.player.reset();
     this.player.mesh.isVisible = true;
     this.track.reset();
-    this.obstacles.reset();
-    this.collectibles.reset();
+    this.obstacles?.reset();
+    this.collectibles?.reset();
     this.explosion.reset();
 
     this.state = "running";

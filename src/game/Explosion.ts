@@ -1,4 +1,15 @@
-import { Color3, Mesh, Scene, StandardMaterial, Vector3, VertexBuffer, VertexData } from "@babylonjs/core";
+import {
+  Color3,
+  Color4,
+  DynamicTexture,
+  Mesh,
+  ParticleSystem,
+  Scene,
+  StandardMaterial,
+  Vector3,
+  VertexBuffer,
+  VertexData,
+} from "@babylonjs/core";
 
 interface Shard {
   mesh: Mesh;
@@ -13,17 +24,44 @@ const MAX_SPIN = 6;
 const GRAVITY = -20;
 const SHARD_LIFETIME = 1;
 
+const PARTICLE_COUNT = 150;
+const PARTICLE_MIN_SIZE = 0.05;
+const PARTICLE_MAX_SIZE = 0.1;
+const PARTICLE_MIN_LIFETIME = 0.7;
+const PARTICLE_MAX_LIFETIME = 1.5;
+const PARTICLE_MIN_SPEED = 2;
+const PARTICLE_MAX_SPEED = 6;
+
 export class Explosion {
   private readonly shards: Shard[] = [];
   private readonly material: StandardMaterial;
+  private readonly particleSystem: ParticleSystem;
 
   /**
-   * Creates the shared material debris shards are rendered with.
-   * @param scene - The Babylon scene to create shard meshes in.
+   * Creates the shared material debris shards are rendered with, and the particle burst
+   * that plays alongside them.
+   * @param scene - The Babylon scene to create shard meshes and particles in.
    */
   constructor(private readonly scene: Scene) {
     this.material = new StandardMaterial("explosionMat", scene);
     this.material.backFaceCulling = false;
+
+    this.particleSystem = new ParticleSystem("explosionParticles", PARTICLE_COUNT, scene);
+    this.particleSystem.particleTexture = createParticleTexture(scene);
+    this.particleSystem.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+    this.particleSystem.minSize = PARTICLE_MIN_SIZE;
+    this.particleSystem.maxSize = PARTICLE_MAX_SIZE;
+    this.particleSystem.minLifeTime = PARTICLE_MIN_LIFETIME;
+    this.particleSystem.maxLifeTime = PARTICLE_MAX_LIFETIME;
+    this.particleSystem.minEmitPower = PARTICLE_MIN_SPEED;
+    this.particleSystem.maxEmitPower = PARTICLE_MAX_SPEED;
+    this.particleSystem.direction1 = new Vector3(-1, -1, -1);
+    this.particleSystem.direction2 = new Vector3(1, 1, 1);
+    this.particleSystem.minEmitBox = Vector3.Zero();
+    this.particleSystem.maxEmitBox = Vector3.Zero();
+    this.particleSystem.gravity = new Vector3(0, -20, 0);
+    this.particleSystem.emitRate = 0;
+    this.particleSystem.start();
   }
 
   /**
@@ -32,11 +70,18 @@ export class Explosion {
    */
   trigger(source: Mesh): void {
     const sourceMaterial = source.material as StandardMaterial | null;
-    this.material.diffuseColor = sourceMaterial?.diffuseColor ?? Color3.White();
+    const color = sourceMaterial?.diffuseColor ?? Color3.White();
+    this.material.diffuseColor = color;
 
     source.computeWorldMatrix(true);
     const worldMatrix = source.getWorldMatrix();
     const center = source.getAbsolutePosition();
+
+    this.particleSystem.emitter = center.clone();
+    this.particleSystem.color1 = new Color4(color.r, color.g, color.b, 1);
+    this.particleSystem.color2 = new Color4(color.r, color.g, color.b, 1);
+    this.particleSystem.colorDead = new Color4(color.r, color.g, color.b, 0);
+    this.particleSystem.manualEmitCount = PARTICLE_COUNT;
 
     const positions = source.getVerticesData(VertexBuffer.PositionKind);
     const indices = source.getIndices();
@@ -100,11 +145,33 @@ export class Explosion {
     }
   }
 
-  // Disposes all debris shards for a new run.
+  // Disposes all debris shards and clears any in-flight particles for a new run.
   reset(): void {
     for (const shard of this.shards) {
       shard.mesh.dispose();
     }
     this.shards.length = 0;
+    this.particleSystem.reset();
   }
+}
+
+/**
+ * Draws a solid, hard-edged white dot into a dynamic texture, used as the particle sprite.
+ * @param scene - The Babylon scene to create the texture in.
+ */
+function createParticleTexture(scene: Scene): DynamicTexture {
+  const size = 64;
+  const texture = new DynamicTexture("explosionParticleTexture", size, scene, false);
+  texture.hasAlpha = true;
+
+  const context = texture.getContext();
+  const center = size / 2;
+  context.clearRect(0, 0, size, size);
+  context.fillStyle = "rgba(255, 255, 255, 1)";
+  context.beginPath();
+  context.arc(center, center, center, 0, Math.PI * 2);
+  context.fill();
+  texture.update();
+
+  return texture;
 }
