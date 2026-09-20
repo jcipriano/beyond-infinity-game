@@ -4,7 +4,7 @@
 wireframe: true
 
 # Surface opacity (0 = invisible, 1 = fully solid) used for object surfaces when wireframe is on.
-opacity: 0.5
+opacity: 0.75
 
 # Line thickness for the wireframe edge outlines.
 edgeWidth: 1

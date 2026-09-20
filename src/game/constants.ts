@@ -22,6 +22,11 @@ export const DESPAWN_Z = -6;
 // reproducing a full wireframe grid instead of only the sharpest creases.
 export const EDGE_ANGLE_EPSILON = 0.9999;
 
+// Transparent meshes are sorted by alphaIndex before distance, so giving the ground a lower value
+// than the (default Number.MAX_VALUE) obstacles/gems/player guarantees it always renders first,
+// instead of competing on a per-tile distance estimate that's a poor proxy for a 40-unit-long plane.
+export const GROUND_ALPHA_INDEX = 0;
+
 // Picks a random lane's x position, used to place obstacles and gems.
 export function randomLaneX(): number {
   const index = Math.floor(Math.random() * LANE_X_POSITIONS.length);

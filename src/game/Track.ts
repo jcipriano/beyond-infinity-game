@@ -1,5 +1,5 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
-import { DESPAWN_Z, EDGE_ANGLE_EPSILON } from "./constants";
+import { DESPAWN_Z, EDGE_ANGLE_EPSILON, GROUND_ALPHA_INDEX } from "./constants";
 import { settings } from "../settings";
 
 const TILE_LENGTH = 40;
@@ -24,6 +24,7 @@ export class Track {
       const tile = MeshBuilder.CreateGround(`tile${i}`, { width: TILE_WIDTH, height: TILE_LENGTH }, scene);
       tile.material = material;
       tile.position.z = i * TILE_LENGTH;
+      tile.alphaIndex = GROUND_ALPHA_INDEX;
       if (settings.wireframe) {
         tile.enableEdgesRendering(EDGE_ANGLE_EPSILON);
         tile.edgesWidth = settings.edgeWidth;
