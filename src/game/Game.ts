@@ -14,7 +14,8 @@ import { settings } from "../settings";
 
 type RunState = "intro" | "running" | "gameover";
 
-const GEM_SCORE = 10;
+const GEM_SCORE = 100;
+const BREAKABLE_OBSTACLE_PENALTY = 50;
 const GAME_OVER_DELAY_MS = 1000;
 
 export class Game {
@@ -40,8 +41,7 @@ export class Game {
   private state: RunState = "intro";
   private previewStarted = false;
   private elapsedSeconds = 0;
-  private distance = 0;
-  private gemScore = 0;
+  private score = 0;
   private gemsCollected = 0;
   private gameOverTimeoutId: number | undefined;
 
@@ -115,14 +115,13 @@ export class Game {
   }
 
   /**
-   * Advances speed/distance and every game system for one frame, ending the run on collision.
+   * Advances speed and every game system for one frame, ending the run on collision.
    * @param deltaSeconds - Time elapsed since the last frame, in seconds.
    */
   private update(deltaSeconds: number): void {
     this.elapsedSeconds += deltaSeconds;
     this.updateTimerLabel();
     const speed = Math.min(settings.baseSpeed + this.elapsedSeconds * settings.speedRamp, settings.maxSpeed);
-    this.distance += speed * deltaSeconds;
     this.updateSpeedLabel(speed);
 
     this.player.update(deltaSeconds, speed);
@@ -143,13 +142,16 @@ export class Game {
         ...(this.collectibles?.positions ?? []),
         ...(this.breakableObstacles?.positions ?? []),
       ]) ?? false;
-    this.breakableObstacles?.update(deltaSeconds, speed, this.player.mesh.position, [
-      ...(this.obstacles?.positions ?? []),
-      ...(this.collectibles?.positions ?? []),
-    ]);
+    const breakableHitsThisFrame =
+      this.breakableObstacles?.update(deltaSeconds, speed, this.player.mesh.position, [
+        ...(this.obstacles?.positions ?? []),
+        ...(this.collectibles?.positions ?? []),
+      ]) ?? 0;
     this.camera.update(this.player.mesh.position, deltaSeconds);
 
-    this.gemScore += gemsCollectedThisFrame * GEM_SCORE;
+    this.score += gemsCollectedThisFrame * GEM_SCORE;
+    this.score -= breakableHitsThisFrame * BREAKABLE_OBSTACLE_PENALTY;
+    this.score = Math.max(0, this.score);
     this.gemsCollected += gemsCollectedThisFrame;
     this.updateScoreLabel();
     this.updateGemCountLabel();
@@ -159,10 +161,10 @@ export class Game {
     if (collided && collisionEnabled) this.endRun();
   }
 
-  // Renders the current score (distance traveled plus gem bonus) into the HUD.
+  // Renders the current score into the HUD.
   private updateScoreLabel(): void {
     if (!this.scoreLabel) return;
-    this.scoreLabel.textContent = String(Math.floor(this.distance) + this.gemScore);
+    this.scoreLabel.textContent = String(this.score);
   }
 
   // Renders the number of gems collected so far into the HUD.
@@ -213,8 +215,7 @@ export class Game {
   private restart(): void {
     window.clearTimeout(this.gameOverTimeoutId);
     this.elapsedSeconds = 0;
-    this.distance = 0;
-    this.gemScore = 0;
+    this.score = 0;
     this.gemsCollected = 0;
     this.updateScoreLabel();
     this.updateGemCountLabel();
