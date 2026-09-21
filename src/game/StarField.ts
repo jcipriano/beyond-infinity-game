@@ -7,7 +7,7 @@ const TUNNEL_CENTER_Y = 10;
 const STAR_MIN_RADIUS = 8;
 const STAR_MAX_RADIUS = 40;
 const STAR_RANGE_Z = 150;
-const PARALLAX_FACTOR = 0.15;
+const PARALLAX_FACTOR = 1.5;
 
 export class StarField {
   private readonly stars: Mesh[] = [];
@@ -45,8 +45,8 @@ export class StarField {
   }
 
   /**
-   * Drifts stars toward the player at a fraction of world speed, for a distant parallax effect,
-   * and recycles passed ones back out to the far end of the tunnel.
+   * Drifts stars toward the player faster than world speed, so they streak past ahead of the
+   * track and obstacles, and recycles passed ones back out to the far end of the tunnel.
    * @param deltaSeconds - Time elapsed since the last frame, in seconds.
    * @param speed - Current forward speed in units per second.
    */
