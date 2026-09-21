@@ -38,20 +38,49 @@ export function randomLaneX(): number {
   return LANE_X_POSITIONS[index];
 }
 
-// Minimum z distance required between an obstacle and a gem sharing a lane, so their meshes never overlap.
+// Minimum z distance required between two lane-based objects sharing a lane, so their meshes
+// never overlap, regardless of which of the three object types (obstacle/gem/breakable
+// obstacle) each one is.
 export const CROSS_TYPE_MIN_GAP = 3;
 
 /**
- * Picks a lane x position at the given z that isn't already occupied (within minGap) by another
- * lane-based object, so obstacles and gems never spawn overlapping each other.
- * @param z - The z position the new object will spawn at.
- * @param others - Positions of the other object type's currently active instances.
- * @param minGap - Minimum z separation required to consider a lane clear at this z.
+ * Picks a lane x position and z position — starting at the given z, and only pushed further out
+ * if every lane is blocked there — that isn't already occupied (within minGap) by another
+ * lane-based object. With three independent object pools all sharing three lanes, a lane being
+ * blocked at the exact requested z is no longer rare enough to just fall back to a random lane
+ * (as a two-pool system could get away with); nudging the spawn point out by minGap and
+ * rechecking guarantees a genuinely clear placement instead.
+ *
+ * Lanes are tried in rotation starting from preferredLaneIndex, rather than picked randomly
+ * among whichever are clear — a pool that always calls this with the previous result's
+ * laneIndex + 1 cycles evenly through all three lanes over time instead of clumping into
+ * whichever one chance favors, which otherwise becomes pronounced with small pool sizes.
+ * @param z - The z position the new object would ideally spawn at.
+ * @param others - Positions of the other object types' currently active instances.
+ * @param minGap - Minimum z separation required to consider a lane clear at a given z.
+ * @param preferredLaneIndex - Index into LANE_X_POSITIONS to try first, then rotate through the rest.
  */
-export function pickClearLaneX(z: number, others: Vector3[], minGap: number): number {
-  const clearLanes = LANE_X_POSITIONS.filter((x) =>
-    others.every((other) => Math.abs(other.x - x) > 0.01 || Math.abs(other.z - z) >= minGap)
-  );
-  const candidates = clearLanes.length > 0 ? clearLanes : LANE_X_POSITIONS;
-  return candidates[Math.floor(Math.random() * candidates.length)];
+export function pickClearSpawnPoint(
+  z: number,
+  others: Vector3[],
+  minGap: number,
+  preferredLaneIndex: number
+): { x: number; z: number; laneIndex: number } {
+  let candidateZ = z;
+  // Bounded by more than the total number of other objects, since in the worst case (all of
+  // them crammed into one lane near candidateZ) that's how many steps it could take to clear
+  // the last one — comfortably safe given this game's object counts.
+  const maxAttempts = others.length + LANE_X_POSITIONS.length;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    for (let i = 0; i < LANE_X_POSITIONS.length; i++) {
+      const laneIndex = (preferredLaneIndex + i) % LANE_X_POSITIONS.length;
+      const x = LANE_X_POSITIONS[laneIndex];
+      const isClear = others.every(
+        (other) => Math.abs(other.x - x) > 0.01 || Math.abs(other.z - candidateZ) >= minGap
+      );
+      if (isClear) return { x, z: candidateZ, laneIndex };
+    }
+    candidateZ += minGap;
+  }
+  return { x: randomLaneX(), z: candidateZ, laneIndex: preferredLaneIndex };
 }

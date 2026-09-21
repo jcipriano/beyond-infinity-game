@@ -1,4 +1,5 @@
 import { Color4, Engine, HemisphericLight, Scene, Vector3 } from "@babylonjs/core";
+import { BreakableObstacleField } from "./BreakableObstacles";
 import { ChaseCamera } from "./ChaseCamera";
 import { CollectibleField } from "./Collectibles";
 import { Explosion } from "./Explosion";
@@ -23,6 +24,7 @@ export class Game {
   private readonly track: Track;
   private readonly player: Player;
   private readonly obstacles: ObstacleField | null;
+  private readonly breakableObstacles: BreakableObstacleField | null;
   private readonly collectibles: CollectibleField | null;
   private readonly camera: ChaseCamera;
   private readonly explosion: Explosion;
@@ -60,10 +62,15 @@ export class Game {
     const spawnObstacles = !settings.testMode.enabled || settings.testMode.spawn !== "gems";
     const spawnGems = !settings.testMode.enabled || settings.testMode.spawn !== "obstacles";
     this.obstacles = spawnObstacles ? new ObstacleField(this.scene) : null;
-    this.collectibles = spawnGems ? new CollectibleField(this.scene, this.obstacles?.positions ?? []) : null;
+    this.breakableObstacles = spawnObstacles
+      ? new BreakableObstacleField(this.scene, this.obstacles?.positions ?? [])
+      : null;
+    const hazardPositions = [...(this.obstacles?.positions ?? []), ...(this.breakableObstacles?.positions ?? [])];
+    this.collectibles = spawnGems ? new CollectibleField(this.scene, hazardPositions) : null;
     // Obstacles/gems stay hidden until the run actually starts, so the intro/countdown preview
     // shows an empty track.
     this.obstacles?.setVisible(false);
+    this.breakableObstacles?.setVisible(false);
     this.collectibles?.setVisible(false);
     this.camera = new ChaseCamera(this.scene);
     // Orients the camera correctly right away, so it doesn't snap into place when gameplay
@@ -121,11 +128,25 @@ export class Game {
     this.player.update(deltaSeconds, speed);
     this.starField.update(deltaSeconds, speed);
     this.track.update(deltaSeconds, speed);
+
+    // Each of these three reads the others' current positions inline (not a snapshot taken up
+    // front), so every call sees the freshest state, including anything the earlier calls this
+    // same frame already moved — otherwise two independent fields could both pick the same
+    // just-vacated slot in the same frame without seeing each other's choice.
     const gemsCollectedThisFrame =
-      this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position, this.obstacles?.positions ?? []) ?? 0;
+      this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position, [
+        ...(this.obstacles?.positions ?? []),
+        ...(this.breakableObstacles?.positions ?? []),
+      ]) ?? 0;
     const collided =
-      this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position, this.collectibles?.positions ?? []) ??
-      false;
+      this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position, [
+        ...(this.collectibles?.positions ?? []),
+        ...(this.breakableObstacles?.positions ?? []),
+      ]) ?? false;
+    this.breakableObstacles?.update(deltaSeconds, speed, this.player.mesh.position, [
+      ...(this.obstacles?.positions ?? []),
+      ...(this.collectibles?.positions ?? []),
+    ]);
     this.camera.update(this.player.mesh.position, deltaSeconds);
 
     this.gemScore += gemsCollectedThisFrame * GEM_SCORE;
@@ -172,6 +193,7 @@ export class Game {
   // Reveals obstacles/gems and starts the real run, once the intro countdown finishes.
   private beginRun(): void {
     this.obstacles?.setVisible(true);
+    this.breakableObstacles?.setVisible(true);
     this.collectibles?.setVisible(true);
     this.state = "running";
   }
@@ -205,7 +227,8 @@ export class Game {
     this.starField.reset();
     this.track.reset();
     this.obstacles?.reset();
-    this.collectibles?.reset(this.obstacles?.positions ?? []);
+    this.breakableObstacles?.reset(this.obstacles?.positions ?? []);
+    this.collectibles?.reset([...(this.obstacles?.positions ?? []), ...(this.breakableObstacles?.positions ?? [])]);
     this.explosion.reset();
     this.sound.restartMusic();
 
