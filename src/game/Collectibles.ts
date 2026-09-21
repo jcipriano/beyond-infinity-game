@@ -65,17 +65,18 @@ export class CollectibleField extends LaneObjectField {
    * @param playerPosition - The player mesh's current world position.
    * @param otherPositions - Current obstacle/breakable-obstacle positions, avoided when
    * recycling a gem to a new lane.
+   * @returns The world position of each gem collected this frame, captured before it respawns.
    */
-  update(deltaSeconds: number, speed: number, playerPosition: Vector3, otherPositions: Vector3[]): number {
+  update(deltaSeconds: number, speed: number, playerPosition: Vector3, otherPositions: Vector3[]): Vector3[] {
     const step = speed * deltaSeconds;
     this.scrollSpawnZ(step);
-    let collected = 0;
+    const collectedPositions: Vector3[] = [];
     for (const gem of this.items) {
       gem.position.z -= step;
       gem.rotation.y += SPIN_SPEED * deltaSeconds;
 
       if (Vector3.Distance(gem.position, playerPosition) < PICKUP_RADIUS) {
-        collected += 1;
+        collectedPositions.push(gem.position.clone());
         this.explosion.trigger(gem);
         this.respawn(gem, otherPositions);
       } else if (gem.position.z < DESPAWN_Z) {
@@ -83,7 +84,7 @@ export class CollectibleField extends LaneObjectField {
       }
     }
     this.explosion.update(deltaSeconds);
-    return collected;
+    return collectedPositions;
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Color4, Engine, HemisphericLight, Scene, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, HemisphericLight, Scene, Vector3 } from "@babylonjs/core";
 import { BreakableObstacleField } from "./BreakableObstacles";
 import { ChaseCamera } from "./ChaseCamera";
 import { CollectibleField } from "./Collectibles";
@@ -7,6 +7,7 @@ import { GameOverScreen } from "./GameOverScreen";
 import { IntroScreen } from "./IntroScreen";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
+import { ScorePopups } from "./ScorePopups";
 import { SoundManager } from "./SoundManager";
 import { StarField } from "./StarField";
 import { Track } from "./Track";
@@ -17,6 +18,8 @@ type RunState = "intro" | "running" | "gameover";
 const GEM_SCORE = 100;
 const BREAKABLE_OBSTACLE_PENALTY = 50;
 const GAME_OVER_DELAY_MS = 1000;
+const POSITIVE_POPUP_COLOR = new Color3(0.3, 1, 0.4);
+const NEGATIVE_POPUP_COLOR = new Color3(1, 0.3, 0.3);
 
 export class Game {
   private readonly engine: Engine;
@@ -29,6 +32,7 @@ export class Game {
   private readonly collectibles: CollectibleField | null;
   private readonly camera: ChaseCamera;
   private readonly explosion: Explosion;
+  private readonly scorePopups: ScorePopups;
   private readonly sound: SoundManager;
   private readonly introScreen: IntroScreen;
   private readonly gameOverScreen: GameOverScreen;
@@ -77,6 +81,7 @@ export class Game {
     // starts after sitting at its default orientation through the intro/countdown screens.
     this.camera.update(this.player.mesh.position, 0);
     this.explosion = new Explosion(this.scene);
+    this.scorePopups = new ScorePopups(this.scene);
     this.sound = new SoundManager(this.scene);
     this.introScreen = new IntroScreen(
       () => this.sound.startMusic(),
@@ -98,6 +103,7 @@ export class Game {
       if (this.state === "running") this.update(deltaSeconds);
       else if (this.previewStarted && this.state !== "gameover") this.updatePreview(deltaSeconds);
       this.explosion.update(deltaSeconds);
+      this.scorePopups.update(deltaSeconds);
       this.scene.render();
     });
   }
@@ -132,30 +138,36 @@ export class Game {
     // front), so every call sees the freshest state, including anything the earlier calls this
     // same frame already moved — otherwise two independent fields could both pick the same
     // just-vacated slot in the same frame without seeing each other's choice.
-    const gemsCollectedThisFrame =
+    const gemsCollectedPositions =
       this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position, [
         ...(this.obstacles?.positions ?? []),
         ...(this.breakableObstacles?.positions ?? []),
-      ]) ?? 0;
+      ]) ?? [];
     const collided =
       this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position, [
         ...(this.collectibles?.positions ?? []),
         ...(this.breakableObstacles?.positions ?? []),
       ]) ?? false;
-    const breakableHitsThisFrame =
+    const breakableHitPositions =
       this.breakableObstacles?.update(deltaSeconds, speed, this.player.mesh.position, [
         ...(this.obstacles?.positions ?? []),
         ...(this.collectibles?.positions ?? []),
-      ]) ?? 0;
+      ]) ?? [];
     this.camera.update(this.player.mesh.position, deltaSeconds);
 
-    this.score += gemsCollectedThisFrame * GEM_SCORE;
-    this.score -= breakableHitsThisFrame * BREAKABLE_OBSTACLE_PENALTY;
+    this.score += gemsCollectedPositions.length * GEM_SCORE;
+    this.score -= breakableHitPositions.length * BREAKABLE_OBSTACLE_PENALTY;
     this.score = Math.max(0, this.score);
-    this.gemsCollected += gemsCollectedThisFrame;
+    this.gemsCollected += gemsCollectedPositions.length;
+    for (const position of gemsCollectedPositions) {
+      this.scorePopups.show(position, `+${GEM_SCORE}`, POSITIVE_POPUP_COLOR);
+    }
+    for (const position of breakableHitPositions) {
+      this.scorePopups.show(position, `-${BREAKABLE_OBSTACLE_PENALTY}`, NEGATIVE_POPUP_COLOR);
+    }
     this.updateScoreLabel();
     this.updateGemCountLabel();
-    if (gemsCollectedThisFrame > 0) this.sound.playGemPickup();
+    if (gemsCollectedPositions.length > 0) this.sound.playGemPickup();
 
     const collisionEnabled = !settings.testMode.enabled || settings.testMode.collideWithObstacles;
     if (collided && collisionEnabled) this.endRun();
@@ -231,6 +243,7 @@ export class Game {
     this.breakableObstacles?.reset(this.obstacles?.positions ?? []);
     this.collectibles?.reset([...(this.obstacles?.positions ?? []), ...(this.breakableObstacles?.positions ?? [])]);
     this.explosion.reset();
+    this.scorePopups.reset();
     this.sound.restartMusic();
 
     this.state = "running";

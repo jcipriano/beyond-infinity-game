@@ -6,9 +6,9 @@ import { settings } from "../settings";
 const OBSTACLE_COUNT = 5;
 const MIN_GAP = 10;
 const MAX_GAP = 22;
-export const OBSTACLE_WIDTH = 1.6;
-export const OBSTACLE_HEIGHT = 1.6;
-export const OBSTACLE_DEPTH = 1.6;
+export const OBSTACLE_WIDTH = 2.2;
+export const OBSTACLE_HEIGHT = 2.2;
+export const OBSTACLE_DEPTH = 2.2;
 
 // The gap range shrinks to this fraction of its base size at max speed, so obstacles never
 // get so dense they're impossible to react to even as the run's difficulty ramps up.

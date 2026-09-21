@@ -64,15 +64,16 @@ export class BreakableObstacleField extends LaneObjectField {
    * @param speed - Current forward speed in units per second.
    * @param playerPosition - The player mesh's current world position.
    * @param otherPositions - Current obstacle/gem positions, avoided when recycling to a new lane.
+   * @returns The world position of each obstacle broken this frame, captured before it respawns.
    */
-  update(deltaSeconds: number, speed: number, playerPosition: Vector3, otherPositions: Vector3[]): number {
+  update(deltaSeconds: number, speed: number, playerPosition: Vector3, otherPositions: Vector3[]): Vector3[] {
     const step = speed * deltaSeconds;
     this.scrollSpawnZ(step);
-    let broken = 0;
+    const brokenPositions: Vector3[] = [];
     for (const obstacle of this.items) {
       obstacle.position.z -= step;
       if (isObstacleColliding(obstacle.position, playerPosition)) {
-        broken += 1;
+        brokenPositions.push(obstacle.position.clone());
         this.explosion.trigger(obstacle);
         this.respawn(obstacle, speed, otherPositions);
       } else if (obstacle.position.z < DESPAWN_Z) {
@@ -80,7 +81,7 @@ export class BreakableObstacleField extends LaneObjectField {
       }
     }
     this.explosion.update(deltaSeconds);
-    return broken;
+    return brokenPositions;
   }
 
   /**

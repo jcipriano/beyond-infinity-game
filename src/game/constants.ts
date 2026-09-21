@@ -19,7 +19,7 @@ export const JUMP_SPEED = 11;
 export const LANE_LERP_SPEED = 12;
 export const ROLL_VISUAL_DAMPING = 0.35;
 
-export const SPAWN_Z = 60;
+export const SPAWN_Z = 100;
 export const DESPAWN_Z = -6;
 
 // Edge-detection angle threshold (as a dot product of adjacent face normals) for enableEdgesRendering.
