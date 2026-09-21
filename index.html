@@ -73,7 +73,11 @@
         pointer-events: none;
         user-select: none;
       }
-      #gameOver {
+      .hidden {
+        display: none;
+      }
+      #gameOver,
+      #intro {
         position: fixed;
         inset: 0;
         display: flex;
@@ -85,22 +89,31 @@
         color: #fff;
         text-align: center;
       }
-      #gameOver.hidden {
+      #gameOver.hidden,
+      #intro.hidden {
         display: none;
       }
       #gameOver.noDim {
         background: transparent;
       }
-      #gameOver h1 {
+      #gameOver h1,
+      #intro h1 {
         margin: 0;
         font-size: 40px;
       }
-      #gameOver p {
+      #gameOver p,
+      #intro p {
         margin: 0;
         font-size: 18px;
         opacity: 0.85;
       }
-      #restartButton {
+      #introStatus.countdown {
+        font-size: 140px;
+        font-weight: 700;
+        opacity: 1;
+      }
+      #restartButton,
+      #startButton {
         margin-top: 8px;
         padding: 10px 24px;
         font-size: 16px;
@@ -111,7 +124,8 @@
         color: #fff;
         cursor: pointer;
       }
-      #restartButton:hover {
+      #restartButton:hover,
+      #startButton:hover {
         background: #f29b34;
       }
     </style>
@@ -123,6 +137,11 @@
     <div id="timer">Time elapsed: 0:00</div>
     <div id="speed">Speed: 0</div>
     <div id="instructions">A/D, ←/→, or swipe to change lanes · Space or swipe up to jump</div>
+    <div id="intro">
+      <h1 id="introTitle">Beyond Infinity</h1>
+      <p id="introStatus">loading . . .</p>
+      <button id="startButton" class="hidden">Start</button>
+    </div>
     <div id="gameOver" class="hidden">
       <h1>Game Over</h1>
       <p>Score: <span id="finalScore">0</span></p>

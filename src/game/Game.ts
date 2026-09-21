@@ -9,10 +9,11 @@ import { StarField } from "./StarField";
 import { Track } from "./Track";
 import { settings } from "../settings";
 
-type RunState = "running" | "gameover";
+type RunState = "intro" | "countdown" | "running" | "gameover";
 
 const GEM_SCORE = 10;
 const GAME_OVER_DELAY_MS = 1000;
+const COUNTDOWN_SECONDS = 3;
 
 export class Game {
   private readonly engine: Engine;
@@ -32,13 +33,19 @@ export class Game {
   private readonly gemCountLabel = document.getElementById("gemCount");
   private readonly gameOverOverlay = document.getElementById("gameOver");
   private readonly finalScoreLabel = document.getElementById("finalScore");
+  private readonly introOverlay = document.getElementById("intro");
+  private readonly introTitle = document.getElementById("introTitle");
+  private readonly introStatusLabel = document.getElementById("introStatus");
+  private readonly startButton = document.getElementById("startButton");
 
-  private state: RunState = "running";
+  private state: RunState = "intro";
   private elapsedSeconds = 0;
   private distance = 0;
   private gemScore = 0;
   private gemsCollected = 0;
   private gameOverTimeoutId: number | undefined;
+  private countdownRemaining = COUNTDOWN_SECONDS;
+  private countdownIntervalId: number | undefined;
 
   /**
    * Builds the engine, scene, and all game systems, and wires up restart input.
@@ -59,9 +66,12 @@ export class Game {
     this.obstacles = spawnObstacles ? new ObstacleField(this.scene) : null;
     this.collectibles = spawnGems ? new CollectibleField(this.scene, this.obstacles?.positions ?? []) : null;
     this.camera = new ChaseCamera(this.scene);
+    // Orients the camera correctly right away, so it doesn't snap into place when gameplay
+    // starts after sitting at its default orientation through the intro/countdown screens.
+    this.camera.update(this.player.mesh.position, 0);
     this.explosion = new Explosion(this.scene);
     this.sound = new SoundManager(this.scene);
-    this.sound.startMusic();
+    this.sound.whenReady().then(() => this.showStartButton());
 
     if (settings.testMode.enabled && !settings.testMode.dimGameOver) {
       this.gameOverOverlay?.classList.add("noDim");
@@ -73,6 +83,7 @@ export class Game {
       if (this.state === "gameover" && !this.gameOverOverlay?.classList.contains("hidden")) this.restart();
     });
     document.getElementById("restartButton")?.addEventListener("click", () => this.restart());
+    this.startButton?.addEventListener("click", () => this.beginCountdown());
   }
 
   // Starts Babylon's render loop, updating game state only while a run is active.
@@ -145,6 +156,44 @@ export class Game {
   private updateSpeedLabel(speed: number): void {
     if (!this.speedLabel) return;
     this.speedLabel.textContent = `Speed: ${Math.round(speed)} mph`;
+  }
+
+  // Swaps the "loading . . ." text for the start button, once sound effects are ready.
+  private showStartButton(): void {
+    this.introStatusLabel?.classList.add("hidden");
+    this.startButton?.classList.remove("hidden");
+  }
+
+  // Starts the pre-game countdown once the player clicks Start.
+  private beginCountdown(): void {
+    if (this.state !== "intro") return;
+    this.state = "countdown";
+    this.sound.startMusic();
+    this.introTitle?.classList.add("hidden");
+    this.startButton?.classList.add("hidden");
+    this.introStatusLabel?.classList.add("countdown");
+    this.countdownRemaining = COUNTDOWN_SECONDS;
+    this.updateCountdownLabel();
+    this.countdownIntervalId = window.setInterval(() => this.tickCountdown(), 1000);
+  }
+
+  // Counts the intro overlay down by one second, starting the run once it reaches zero.
+  private tickCountdown(): void {
+    this.countdownRemaining -= 1;
+    if (this.countdownRemaining <= 0) {
+      window.clearInterval(this.countdownIntervalId);
+      this.introOverlay?.classList.add("hidden");
+      this.state = "running";
+      return;
+    }
+    this.updateCountdownLabel();
+  }
+
+  // Renders the remaining countdown seconds into the intro overlay.
+  private updateCountdownLabel(): void {
+    if (!this.introStatusLabel) return;
+    this.introStatusLabel.classList.remove("hidden");
+    this.introStatusLabel.textContent = String(this.countdownRemaining);
   }
 
   // Switches to the game-over state and shatters the player, revealing the overlay after a delay.
