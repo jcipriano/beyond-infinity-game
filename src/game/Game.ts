@@ -46,6 +46,7 @@ export class Game {
   private previewStarted = false;
   private elapsedSeconds = 0;
   private score = 0;
+  private topSpeed = 0;
   private gemsCollected = 0;
   private gameOverTimeoutId: number | undefined;
 
@@ -129,6 +130,7 @@ export class Game {
     this.updateTimerLabel();
     const speed = Math.min(settings.baseSpeed + this.elapsedSeconds * settings.speedRamp, settings.maxSpeed);
     this.updateSpeedLabel(speed);
+    this.topSpeed = Math.max(this.topSpeed, speed);
 
     this.player.update(deltaSeconds, speed);
     this.starField.update(deltaSeconds, speed);
@@ -219,7 +221,7 @@ export class Game {
     this.sound.playObstacleCollision();
     this.player.mesh.isVisible = false;
     this.gameOverTimeoutId = window.setTimeout(() => {
-      this.gameOverScreen.show(this.scoreLabel?.textContent ?? "0");
+      this.gameOverScreen.show(this.scoreLabel?.textContent ?? "0", String(Math.round(this.topSpeed)));
     }, GAME_OVER_DELAY_MS);
   }
 
@@ -228,6 +230,7 @@ export class Game {
     window.clearTimeout(this.gameOverTimeoutId);
     this.elapsedSeconds = 0;
     this.score = 0;
+    this.topSpeed = 0;
     this.gemsCollected = 0;
     this.updateScoreLabel();
     this.updateGemCountLabel();

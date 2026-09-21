@@ -3,6 +3,7 @@ import { settings } from "../settings";
 export class GameOverScreen {
   private readonly overlay = document.getElementById("gameOver");
   private readonly finalScoreLabel = document.getElementById("finalScore");
+  private readonly topSpeedLabel = document.getElementById("topSpeed");
 
   /**
    * Wires up the restart button and R key, and applies test mode's "no dim" style if configured.
@@ -21,11 +22,13 @@ export class GameOverScreen {
   }
 
   /**
-   * Reveals the overlay with the given final score.
+   * Reveals the overlay with the given final score and top speed.
    * @param score - The final score text to display.
+   * @param topSpeed - The top speed text to display.
    */
-  show(score: string): void {
+  show(score: string, topSpeed: string): void {
     if (this.finalScoreLabel) this.finalScoreLabel.textContent = score;
+    if (this.topSpeedLabel) this.topSpeedLabel.textContent = topSpeed;
     this.overlay?.classList.remove("hidden");
   }
 
