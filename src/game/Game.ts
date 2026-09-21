@@ -4,6 +4,7 @@ import { CollectibleField } from "./Collectibles";
 import { Explosion } from "./Explosion";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
+import { SoundManager } from "./SoundManager";
 import { StarField } from "./StarField";
 import { Track } from "./Track";
 import { settings } from "../settings";
@@ -23,6 +24,7 @@ export class Game {
   private readonly collectibles: CollectibleField | null;
   private readonly camera: ChaseCamera;
   private readonly explosion: Explosion;
+  private readonly sound: SoundManager;
 
   private readonly scoreLabel = document.getElementById("score");
   private readonly timerLabel = document.getElementById("timer");
@@ -43,7 +45,7 @@ export class Game {
    * @param canvas - The HTML canvas element Babylon renders into.
    */
   constructor(canvas: HTMLCanvasElement) {
-    this.engine = new Engine(canvas, true, { stencil: true });
+    this.engine = new Engine(canvas, true, { stencil: true, audioEngine: true });
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.05, 0.07, 0.12, 1);
 
@@ -58,6 +60,8 @@ export class Game {
     this.collectibles = spawnGems ? new CollectibleField(this.scene, this.obstacles?.positions ?? []) : null;
     this.camera = new ChaseCamera(this.scene);
     this.explosion = new Explosion(this.scene);
+    this.sound = new SoundManager(this.scene);
+    this.sound.startMusic();
 
     if (settings.testMode.enabled && !settings.testMode.dimGameOver) {
       this.gameOverOverlay?.classList.add("noDim");
@@ -106,6 +110,7 @@ export class Game {
     this.gemsCollected += gemsCollectedThisFrame;
     this.updateScoreLabel();
     this.updateGemCountLabel();
+    if (gemsCollectedThisFrame > 0) this.sound.playGemPickup();
 
     const collisionEnabled = !settings.testMode.enabled || settings.testMode.collideWithObstacles;
     if (collided && collisionEnabled) this.endRun();
@@ -146,6 +151,7 @@ export class Game {
   private endRun(): void {
     this.state = "gameover";
     this.explosion.trigger(this.player.mesh);
+    this.sound.playObstacleCollision();
     this.player.mesh.isVisible = false;
     this.gameOverTimeoutId = window.setTimeout(() => this.showGameOverOverlay(), GAME_OVER_DELAY_MS);
   }

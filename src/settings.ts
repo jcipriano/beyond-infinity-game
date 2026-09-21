@@ -8,6 +8,12 @@ interface TestModeSettings {
   collideWithObstacles: boolean;
 }
 
+interface SoundSettings {
+  enabled: boolean;
+  musicVolume: number;
+  sfxVolume: number;
+}
+
 interface Settings {
   wireframe: boolean;
   opacity: number;
@@ -15,6 +21,7 @@ interface Settings {
   baseSpeed: number;
   maxSpeed: number;
   speedRamp: number;
+  sound: SoundSettings;
   testMode: TestModeSettings;
 }
 

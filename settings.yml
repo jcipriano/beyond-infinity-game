@@ -18,6 +18,15 @@ maxSpeed: 200
 # How fast forward speed ramps up over time (units per second, per second elapsed).
 speedRamp: 0.75
 
+# Sound settings.
+sound:
+  # Master on/off switch for all sound, including music.
+  enabled: true
+  # Background music volume (0 = silent, 1 = full volume).
+  musicVolume: 0.4
+  # Sound effect volume (0 = silent, 1 = full volume).
+  sfxVolume: 0.8
+
 # Test mode, for debugging: spawn only one object type and/or skip dimming the game-over overlay
 # so the scene stays inspectable after a collision. Leave enabled: false for normal play.
 testMode:
