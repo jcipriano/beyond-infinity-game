@@ -5,6 +5,7 @@ import { BASE_SPEED, MAX_SPEED, SPEED_RAMP } from "./constants";
 import { Explosion } from "./Explosion";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
+import { StarField } from "./StarField";
 import { Track } from "./Track";
 import { settings } from "../settings";
 
@@ -16,6 +17,7 @@ const GAME_OVER_DELAY_MS = 1000;
 export class Game {
   private readonly engine: Engine;
   private readonly scene: Scene;
+  private readonly starField: StarField;
   private readonly track: Track;
   private readonly player: Player;
   private readonly obstacles: ObstacleField | null;
@@ -45,6 +47,7 @@ export class Game {
 
     new HemisphericLight("skyLight", new Vector3(0.2, 1, 0.1), this.scene);
 
+    this.starField = new StarField(this.scene);
     this.track = new Track(this.scene);
     this.player = new Player(this.scene);
     const spawnObstacles = !settings.testMode.enabled || settings.testMode.spawn !== "gems";
@@ -87,6 +90,7 @@ export class Game {
     this.distance += speed * deltaSeconds;
 
     this.player.update(deltaSeconds, speed);
+    this.starField.update(deltaSeconds, speed);
     this.track.update(deltaSeconds, speed);
     const gemsCollected = this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position) ?? 0;
     const collided = this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position) ?? false;
@@ -140,6 +144,7 @@ export class Game {
 
     this.player.reset();
     this.player.mesh.isVisible = true;
+    this.starField.reset();
     this.track.reset();
     this.obstacles?.reset();
     this.collectibles?.reset();
