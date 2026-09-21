@@ -19,7 +19,7 @@ export class BreakableObstacleField extends LaneObjectField {
   constructor(scene: Scene, otherPositions: Vector3[]) {
     super(SPAWN_Z);
     this.explosion = new Explosion(scene);
-    const color = new Color3(0.75, 0.75, 0.75);
+    const color = new Color3(0.55, 0.8, 1);
     const material = new StandardMaterial("breakableObstacleMat", scene);
     material.diffuseColor = color;
     material.alpha = settings.wireframe ? settings.opacity : 1;

@@ -17,7 +17,7 @@ export class Track {
    * @param scene - The Babylon scene to create the tiles in.
    */
   constructor(scene: Scene) {
-    const color = new Color3(0.15, 0.35, 0.85);
+    const color = new Color3(0.06, 0.15, 0.4);
     const material = new StandardMaterial("trackMat", scene);
     material.diffuseColor = color;
     material.specularColor = Color3.Black();
