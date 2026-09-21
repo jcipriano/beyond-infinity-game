@@ -103,7 +103,8 @@ export class Game {
     this.gemScore += gemsCollected * GEM_SCORE;
     this.updateScoreLabel();
 
-    if (collided) this.endRun();
+    const collisionEnabled = !settings.testMode.enabled || settings.testMode.collideWithObstacles;
+    if (collided && collisionEnabled) this.endRun();
   }
 
   // Renders the current score (distance traveled plus gem bonus) into the HUD.

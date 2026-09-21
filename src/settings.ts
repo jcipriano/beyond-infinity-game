@@ -5,6 +5,7 @@ interface TestModeSettings {
   enabled: boolean;
   spawn: "gems" | "obstacles" | "both";
   dimGameOver: boolean;
+  collideWithObstacles: boolean;
 }
 
 interface Settings {

@@ -17,6 +17,10 @@ const OBSTACLE_WIDTH = 1.6;
 const OBSTACLE_HEIGHT = 1.6;
 const OBSTACLE_DEPTH = 1.6;
 
+// The gap range shrinks to this fraction of its base size at max speed, so obstacles never
+// get so dense they're impossible to react to even as the run's difficulty ramps up.
+const MIN_DENSITY_SCALE = 0.4;
+
 const LANE_HIT_THRESHOLD = OBSTACLE_WIDTH / 2 + PLAYER_RADIUS - 0.2;
 const Z_HIT_THRESHOLD = OBSTACLE_DEPTH / 2 + PLAYER_RADIUS - 0.2;
 
@@ -47,7 +51,7 @@ export class ObstacleField {
         obstacle.edgesWidth = settings.edgeWidth;
         obstacle.edgesColor.set(color.r, color.g, color.b, 1);
       }
-      this.nextSpawnZ += randomGap();
+      this.nextSpawnZ += randomGap(settings.baseSpeed);
       this.obstacles.push(obstacle);
     }
   }
@@ -57,7 +61,7 @@ export class ObstacleField {
     this.nextSpawnZ = SPAWN_Z;
     for (const obstacle of this.obstacles) {
       obstacle.position.set(randomLaneX(), OBSTACLE_HEIGHT / 2, this.nextSpawnZ);
-      this.nextSpawnZ += randomGap();
+      this.nextSpawnZ += randomGap(settings.baseSpeed);
     }
   }
 
@@ -81,7 +85,7 @@ export class ObstacleField {
       if (obstacle.position.z < DESPAWN_Z) {
         obstacle.position.z = this.nextSpawnZ;
         obstacle.position.x = pickClearLaneX(this.nextSpawnZ, gemPositions, CROSS_TYPE_MIN_GAP);
-        this.nextSpawnZ += randomGap();
+        this.nextSpawnZ += randomGap(speed);
       }
       if (!collided && this.isColliding(obstacle.position, playerPosition)) {
         collided = true;
@@ -104,7 +108,23 @@ export class ObstacleField {
   }
 }
 
-// Picks a random spacing between consecutive obstacles.
-function randomGap(): number {
-  return MIN_GAP + Math.random() * (MAX_GAP - MIN_GAP);
+/**
+ * Picks a random spacing between consecutive obstacles, shrinking as speed increases so
+ * obstacles get denser over the course of a run.
+ * @param speed - Current forward speed in units per second, used to scale the gap range down.
+ */
+function randomGap(speed: number): number {
+  const t = clamp((speed - settings.baseSpeed) / (settings.maxSpeed - settings.baseSpeed), 0, 1);
+  const scale = 1 - t * (1 - MIN_DENSITY_SCALE);
+  return (MIN_GAP + Math.random() * (MAX_GAP - MIN_GAP)) * scale;
+}
+
+/**
+ * Restricts a value to the inclusive [min, max] range.
+ * @param value - The number to clamp.
+ * @param min - The lowest allowed value.
+ * @param max - The highest allowed value.
+ */
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }

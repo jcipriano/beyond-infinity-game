@@ -12,11 +12,13 @@ testMode:
   enabled: false
   spawn: both # "gems" | "obstacles" | "both"
   dimGameOver: true
+  collideWithObstacles: true
 ```
 
 - `enabled: true` turns the mode on.
 - `spawn` controls which object type(s) `Game.ts` actually instantiates (`ObstacleField`/`CollectibleField` are `| null` and skipped entirely when excluded) — e.g. `spawn: gems` gives an undyable run for exhaustively testing gem pickups, `spawn: obstacles` isolates collision/explosion testing without gems in the way.
 - `dimGameOver: false` adds a `noDim` class to the `#gameOver` overlay so the scene stays fully lit and inspectable after a collision, instead of being darkened.
+- `collideWithObstacles: false` lets the player fly through obstacles without ending the run, so things like obstacle spacing/density over a long run can be observed visually instead of ending after the first hit.
 
 Use this whenever manually verifying a change would otherwise mean waiting on luck (surviving to a gem, avoiding/hitting an obstacle on demand, inspecting a frozen post-collision scene). Turn it off (`enabled: false`) before considering a task done — it must never be left on as the shipped default.
 

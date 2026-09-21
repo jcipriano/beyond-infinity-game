@@ -13,10 +13,10 @@ edgeWidth: 1
 baseSpeed: 25
 
 # Forward speed (units per second) the run speeds up to and caps at.
-maxSpeed: 100
+maxSpeed: 200
 
 # How fast forward speed ramps up over time (units per second, per second elapsed).
-speedRamp: 0.5
+speedRamp: 0.75
 
 # Test mode, for debugging: spawn only one object type and/or skip dimming the game-over overlay
 # so the scene stays inspectable after a collision. Leave enabled: false for normal play.
@@ -26,3 +26,6 @@ testMode:
   spawn: both
   # Whether the game-over overlay darkens the scene behind it.
   dimGameOver: true
+  # Whether the player collides with obstacles. Set false to fly through them and observe
+  # things like obstacle density over time without the run ending.
+  collideWithObstacles: true
