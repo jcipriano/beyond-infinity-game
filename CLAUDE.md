@@ -24,6 +24,12 @@ Use this whenever manually verifying a change would otherwise mean waiting on lu
 
 If a future testing need doesn't fit this (e.g. isolating a specific obstacle/gem index, freezing world scroll, forcing a specific lane), it's reasonable to extend `testMode` further rather than resorting to ad hoc throwaway edits.
 
+## Query string setting overrides
+
+Any `settings.yml` value can be overridden per page load via the query string, without editing the file — e.g. `?baseSpeed=40&testMode.enabled=true&testMode.spawn=obstacles`. Nested fields (like everything under `testMode`) use dot notation. This is handled in `src/settings.ts`, which coerces each raw string value to match the corresponding default's type (boolean/number/string) — there's no separate schema to keep in sync.
+
+Prefer this over editing `settings.yml` for one-off/temporary testing (e.g. a single verification run at a specific speed), since it doesn't touch a tracked file. Still use `settings.yml` itself for defaults that should persist.
+
 ## Testing on an iPad/iPhone
 
 The dev server (`.claude/launch.json`'s `dev` config) runs `vite --host` so it's reachable from other devices on the same network, not just localhost. To test on an iPad/iPhone:
