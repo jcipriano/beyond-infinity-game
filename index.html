@@ -53,6 +53,16 @@
         pointer-events: none;
         user-select: none;
       }
+      #gemCount {
+        position: fixed;
+        top: 42px;
+        left: 16px;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 16px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+        user-select: none;
+      }
       #instructions {
         position: fixed;
         bottom: 16px;
@@ -109,7 +119,8 @@
   <body>
     <canvas id="renderCanvas"></canvas>
     <div id="hud">Score: <span id="score">0</span></div>
-    <div id="timer">0:00</div>
+    <div id="gemCount">Gems: 0</div>
+    <div id="timer">Time elapsed: 0:00</div>
     <div id="speed">Speed: 0</div>
     <div id="instructions">A/D, ←/→, or swipe to change lanes · Space or swipe up to jump</div>
     <div id="gameOver" class="hidden">

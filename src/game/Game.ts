@@ -27,6 +27,7 @@ export class Game {
   private readonly scoreLabel = document.getElementById("score");
   private readonly timerLabel = document.getElementById("timer");
   private readonly speedLabel = document.getElementById("speed");
+  private readonly gemCountLabel = document.getElementById("gemCount");
   private readonly gameOverOverlay = document.getElementById("gameOver");
   private readonly finalScoreLabel = document.getElementById("finalScore");
 
@@ -34,6 +35,7 @@ export class Game {
   private elapsedSeconds = 0;
   private distance = 0;
   private gemScore = 0;
+  private gemsCollected = 0;
   private gameOverTimeoutId: number | undefined;
 
   /**
@@ -93,15 +95,17 @@ export class Game {
     this.player.update(deltaSeconds, speed);
     this.starField.update(deltaSeconds, speed);
     this.track.update(deltaSeconds, speed);
-    const gemsCollected =
+    const gemsCollectedThisFrame =
       this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position, this.obstacles?.positions ?? []) ?? 0;
     const collided =
       this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position, this.collectibles?.positions ?? []) ??
       false;
     this.camera.update(this.player.mesh.position, deltaSeconds);
 
-    this.gemScore += gemsCollected * GEM_SCORE;
+    this.gemScore += gemsCollectedThisFrame * GEM_SCORE;
+    this.gemsCollected += gemsCollectedThisFrame;
     this.updateScoreLabel();
+    this.updateGemCountLabel();
 
     const collisionEnabled = !settings.testMode.enabled || settings.testMode.collideWithObstacles;
     if (collided && collisionEnabled) this.endRun();
@@ -113,6 +117,12 @@ export class Game {
     this.scoreLabel.textContent = String(Math.floor(this.distance) + this.gemScore);
   }
 
+  // Renders the number of gems collected so far into the HUD.
+  private updateGemCountLabel(): void {
+    if (!this.gemCountLabel) return;
+    this.gemCountLabel.textContent = `Gems: ${this.gemsCollected}`;
+  }
+
   // Renders elapsed run time as minutes:seconds.tenths into the HUD.
   private updateTimerLabel(): void {
     if (!this.timerLabel) return;
@@ -120,7 +130,7 @@ export class Game {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     const tenths = Math.floor((this.elapsedSeconds - totalSeconds) * 10);
-    this.timerLabel.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}.${tenths}`;
+    this.timerLabel.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, "0")}.${tenths}`;
   }
 
   /**
@@ -129,7 +139,7 @@ export class Game {
    */
   private updateSpeedLabel(speed: number): void {
     if (!this.speedLabel) return;
-    this.speedLabel.textContent = `Speed: ${Math.round(speed)}`;
+    this.speedLabel.textContent = `Speed: ${Math.round(speed)} mph`;
   }
 
   // Switches to the game-over state and shatters the player, revealing the overlay after a delay.
@@ -152,7 +162,9 @@ export class Game {
     this.elapsedSeconds = 0;
     this.distance = 0;
     this.gemScore = 0;
+    this.gemsCollected = 0;
     this.updateScoreLabel();
+    this.updateGemCountLabel();
     this.updateTimerLabel();
     this.updateSpeedLabel(settings.baseSpeed);
     this.gameOverOverlay?.classList.add("hidden");

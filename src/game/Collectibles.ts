@@ -71,6 +71,10 @@ export class CollectibleField {
    */
   update(deltaSeconds: number, speed: number, playerPosition: Vector3, obstaclePositions: Vector3[]): number {
     const step = speed * deltaSeconds;
+    // nextSpawnZ must scroll with everything else, or it drifts further ahead of the world
+    // over time (it otherwise only ever increases via recycling), spacing objects out more
+    // and more the longer a run lasts.
+    this.nextSpawnZ -= step;
     let collected = 0;
     for (const gem of this.gems) {
       gem.position.z -= step;

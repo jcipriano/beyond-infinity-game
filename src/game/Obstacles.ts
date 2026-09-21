@@ -79,6 +79,10 @@ export class ObstacleField {
    */
   update(deltaSeconds: number, speed: number, playerPosition: Vector3, gemPositions: Vector3[]): boolean {
     const step = speed * deltaSeconds;
+    // nextSpawnZ must scroll with everything else, or it drifts further ahead of the world
+    // over time (it otherwise only ever increases via recycling), spacing objects out more
+    // and more the longer a run lasts.
+    this.nextSpawnZ -= step;
     let collided = false;
     for (const obstacle of this.obstacles) {
       obstacle.position.z -= step;
