@@ -20,8 +20,9 @@ speedRamp: 0.75
 
 # Sound settings.
 sound:
-  # Master on/off switch for all sound, including music.
-  enabled: true
+  # Master on/off switch for all sound, including music. When false, sound files aren't even
+  # loaded, not just muted.
+  enabled: false
   # Background music volume (0 = silent, 1 = full volume).
   musicVolume: 0.4
   # Sound effect volume (0 = silent, 1 = full volume).

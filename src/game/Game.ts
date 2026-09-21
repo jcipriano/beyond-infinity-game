@@ -2,6 +2,8 @@ import { Color4, Engine, HemisphericLight, Scene, Vector3 } from "@babylonjs/cor
 import { ChaseCamera } from "./ChaseCamera";
 import { CollectibleField } from "./Collectibles";
 import { Explosion } from "./Explosion";
+import { GameOverScreen } from "./GameOverScreen";
+import { IntroScreen } from "./IntroScreen";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
 import { SoundManager } from "./SoundManager";
@@ -9,11 +11,10 @@ import { StarField } from "./StarField";
 import { Track } from "./Track";
 import { settings } from "../settings";
 
-type RunState = "intro" | "countdown" | "running" | "gameover";
+type RunState = "intro" | "running" | "gameover";
 
 const GEM_SCORE = 10;
 const GAME_OVER_DELAY_MS = 1000;
-const COUNTDOWN_SECONDS = 3;
 
 export class Game {
   private readonly engine: Engine;
@@ -26,17 +27,13 @@ export class Game {
   private readonly camera: ChaseCamera;
   private readonly explosion: Explosion;
   private readonly sound: SoundManager;
+  private readonly introScreen: IntroScreen;
+  private readonly gameOverScreen: GameOverScreen;
 
   private readonly scoreLabel = document.getElementById("score");
   private readonly timerLabel = document.getElementById("timer");
   private readonly speedLabel = document.getElementById("speed");
   private readonly gemCountLabel = document.getElementById("gemCount");
-  private readonly gameOverOverlay = document.getElementById("gameOver");
-  private readonly finalScoreLabel = document.getElementById("finalScore");
-  private readonly introOverlay = document.getElementById("intro");
-  private readonly introTitle = document.getElementById("introTitle");
-  private readonly introStatusLabel = document.getElementById("introStatus");
-  private readonly startButton = document.getElementById("startButton");
 
   private state: RunState = "intro";
   private previewStarted = false;
@@ -45,8 +42,6 @@ export class Game {
   private gemScore = 0;
   private gemsCollected = 0;
   private gameOverTimeoutId: number | undefined;
-  private countdownRemaining = COUNTDOWN_SECONDS;
-  private countdownIntervalId: number | undefined;
 
   /**
    * Builds the engine, scene, and all game systems, and wires up restart input.
@@ -76,24 +71,17 @@ export class Game {
     this.camera.update(this.player.mesh.position, 0);
     this.explosion = new Explosion(this.scene);
     this.sound = new SoundManager(this.scene);
-    this.sound.whenReady().then(() => this.showStartButton());
-
-    if (settings.testMode.enabled && !settings.testMode.dimGameOver) {
-      this.gameOverOverlay?.classList.add("noDim");
-    }
+    this.introScreen = new IntroScreen(
+      () => this.sound.startMusic(),
+      () => this.beginRun()
+    );
+    this.sound.whenReady().then(() => {
+      this.previewStarted = true;
+      this.introScreen.showStartButton();
+    });
+    this.gameOverScreen = new GameOverScreen(() => this.restart());
 
     window.addEventListener("resize", () => this.engine.resize());
-    window.addEventListener("keydown", (event) => {
-      const key = event.key.toLowerCase();
-      if (key === "r" && this.state === "gameover" && !this.gameOverOverlay?.classList.contains("hidden")) {
-        this.restart();
-      }
-      if (key === "enter" && this.state === "intro" && !this.startButton?.classList.contains("hidden")) {
-        this.beginCountdown();
-      }
-    });
-    document.getElementById("restartButton")?.addEventListener("click", () => this.restart());
-    this.startButton?.addEventListener("click", () => this.beginCountdown());
   }
 
   // Starts Babylon's render loop, updating game state only while a run is active.
@@ -181,45 +169,11 @@ export class Game {
     this.speedLabel.textContent = `Speed: ${Math.round(speed)} mph`;
   }
 
-  // Swaps the "loading . . ." text for the start button, once sound effects are ready.
-  private showStartButton(): void {
-    this.introStatusLabel?.classList.add("hidden");
-    this.startButton?.classList.remove("hidden");
-    this.previewStarted = true;
-  }
-
-  // Starts the pre-game countdown once the player clicks Start.
-  private beginCountdown(): void {
-    if (this.state !== "intro") return;
-    this.state = "countdown";
-    this.sound.startMusic();
-    this.introTitle?.classList.add("hidden");
-    this.startButton?.classList.add("hidden");
-    this.introStatusLabel?.classList.add("countdown");
-    this.countdownRemaining = COUNTDOWN_SECONDS;
-    this.updateCountdownLabel();
-    this.countdownIntervalId = window.setInterval(() => this.tickCountdown(), 1000);
-  }
-
-  // Counts the intro overlay down by one second, starting the run once it reaches zero.
-  private tickCountdown(): void {
-    this.countdownRemaining -= 1;
-    if (this.countdownRemaining <= 0) {
-      window.clearInterval(this.countdownIntervalId);
-      this.introOverlay?.classList.add("hidden");
-      this.obstacles?.setVisible(true);
-      this.collectibles?.setVisible(true);
-      this.state = "running";
-      return;
-    }
-    this.updateCountdownLabel();
-  }
-
-  // Renders the remaining countdown seconds into the intro overlay.
-  private updateCountdownLabel(): void {
-    if (!this.introStatusLabel) return;
-    this.introStatusLabel.classList.remove("hidden");
-    this.introStatusLabel.textContent = String(this.countdownRemaining);
+  // Reveals obstacles/gems and starts the real run, once the intro countdown finishes.
+  private beginRun(): void {
+    this.obstacles?.setVisible(true);
+    this.collectibles?.setVisible(true);
+    this.state = "running";
   }
 
   // Switches to the game-over state and shatters the player, revealing the overlay after a delay.
@@ -228,13 +182,9 @@ export class Game {
     this.explosion.trigger(this.player.mesh);
     this.sound.playObstacleCollision();
     this.player.mesh.isVisible = false;
-    this.gameOverTimeoutId = window.setTimeout(() => this.showGameOverOverlay(), GAME_OVER_DELAY_MS);
-  }
-
-  // Shows the final score overlay, once the post-collision delay has elapsed.
-  private showGameOverOverlay(): void {
-    if (this.finalScoreLabel) this.finalScoreLabel.textContent = this.scoreLabel?.textContent ?? "0";
-    this.gameOverOverlay?.classList.remove("hidden");
+    this.gameOverTimeoutId = window.setTimeout(() => {
+      this.gameOverScreen.show(this.scoreLabel?.textContent ?? "0");
+    }, GAME_OVER_DELAY_MS);
   }
 
   // Resets score, systems, and state so a new run starts from scratch.
@@ -248,7 +198,7 @@ export class Game {
     this.updateGemCountLabel();
     this.updateTimerLabel();
     this.updateSpeedLabel(settings.baseSpeed);
-    this.gameOverOverlay?.classList.add("hidden");
+    this.gameOverScreen.hide();
 
     this.player.reset();
     this.player.mesh.isVisible = true;
@@ -257,6 +207,7 @@ export class Game {
     this.obstacles?.reset();
     this.collectibles?.reset(this.obstacles?.positions ?? []);
     this.explosion.reset();
+    this.sound.restartMusic();
 
     this.state = "running";
   }

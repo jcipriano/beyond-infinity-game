@@ -6,22 +6,31 @@ import { settings } from "../settings";
 const LOAD_TIMEOUT_MS = 5000;
 
 export class SoundManager {
-  private readonly music: Sound;
-  private readonly gemPickupSound: Sound;
-  private readonly obstacleCollisionSound: Sound;
+  private readonly music: Sound | null;
+  private readonly gemPickupSound: Sound | null;
+  private readonly obstacleCollisionSound: Sound | null;
   private readonly sfxReady: Promise<void>;
 
   /**
-   * Loads background music and sound effects, ready to be played on demand.
+   * Loads background music and sound effects, ready to be played on demand. Skips loading
+   * entirely when sound is disabled in settings.
    * @param scene - The Babylon scene to attach the sounds to.
    */
   constructor(scene: Scene) {
+    if (!settings.sound.enabled) {
+      this.music = null;
+      this.gemPickupSound = null;
+      this.obstacleCollisionSound = null;
+      this.sfxReady = Promise.resolve();
+      return;
+    }
+
     let resolveGemReady: () => void;
     let resolveObstacleReady: () => void;
     const gemReady = new Promise<void>((resolve) => (resolveGemReady = resolve));
     const obstacleReady = new Promise<void>((resolve) => (resolveObstacleReady = resolve));
 
-    this.music = new Sound("music", "/sounds/music.mp3", scene, null, {
+    this.music = new Sound("music", "/sounds/neon-chaser.mp3", scene, null, {
       loop: true,
       volume: settings.sound.musicVolume,
     });
@@ -50,24 +59,27 @@ export class SoundManager {
 
   // Starts the background music looping, if sound is enabled.
   startMusic(): void {
-    if (!settings.sound.enabled) return;
-    this.music.play();
+    this.music?.play();
+  }
+
+  // Restarts the background music from the beginning, if sound is enabled.
+  restartMusic(): void {
+    this.music?.stop();
+    this.music?.play();
   }
 
   // Stops the background music.
   stopMusic(): void {
-    this.music.stop();
+    this.music?.stop();
   }
 
   // Plays the gem pickup sound effect, if sound is enabled.
   playGemPickup(): void {
-    if (!settings.sound.enabled) return;
-    this.gemPickupSound.play();
+    this.gemPickupSound?.play();
   }
 
   // Plays the obstacle collision sound effect, if sound is enabled.
   playObstacleCollision(): void {
-    if (!settings.sound.enabled) return;
-    this.obstacleCollisionSound.play();
+    this.obstacleCollisionSound?.play();
   }
 }
