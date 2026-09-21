@@ -36,20 +36,20 @@
       }
       #timer {
         position: fixed;
-        top: 12px;
+        top: 42px;
         right: 16px;
-        color: #fff;
-        font-size: 22px;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 16px;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
         pointer-events: none;
         user-select: none;
       }
       #speed {
         position: fixed;
-        top: 42px;
+        top: 12px;
         right: 16px;
-        color: rgba(255, 255, 255, 0.75);
-        font-size: 16px;
+        color: #fff;
+        font-size: 22px;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
         pointer-events: none;
         user-select: none;
@@ -146,6 +146,7 @@
     <div id="gameOver" class="hidden">
       <h1>Game Over</h1>
       <p>Score: <span id="finalScore">0</span></p>
+      <p>Top speed: <span id="topSpeed">0</span> mph</p>
       <button id="restartButton">Restart (R)</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
