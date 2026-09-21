@@ -53,7 +53,7 @@ export class Game {
     const spawnObstacles = !settings.testMode.enabled || settings.testMode.spawn !== "gems";
     const spawnGems = !settings.testMode.enabled || settings.testMode.spawn !== "obstacles";
     this.obstacles = spawnObstacles ? new ObstacleField(this.scene) : null;
-    this.collectibles = spawnGems ? new CollectibleField(this.scene) : null;
+    this.collectibles = spawnGems ? new CollectibleField(this.scene, this.obstacles?.positions ?? []) : null;
     this.camera = new ChaseCamera(this.scene);
     this.explosion = new Explosion(this.scene);
 
@@ -92,8 +92,11 @@ export class Game {
     this.player.update(deltaSeconds, speed);
     this.starField.update(deltaSeconds, speed);
     this.track.update(deltaSeconds, speed);
-    const gemsCollected = this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position) ?? 0;
-    const collided = this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position) ?? false;
+    const gemsCollected =
+      this.collectibles?.update(deltaSeconds, speed, this.player.mesh.position, this.obstacles?.positions ?? []) ?? 0;
+    const collided =
+      this.obstacles?.update(deltaSeconds, speed, this.player.mesh.position, this.collectibles?.positions ?? []) ??
+      false;
     this.camera.update(this.player.mesh.position, deltaSeconds);
 
     this.gemScore += gemsCollected * GEM_SCORE;
@@ -147,7 +150,7 @@ export class Game {
     this.starField.reset();
     this.track.reset();
     this.obstacles?.reset();
-    this.collectibles?.reset();
+    this.collectibles?.reset(this.obstacles?.positions ?? []);
     this.explosion.reset();
 
     this.state = "running";

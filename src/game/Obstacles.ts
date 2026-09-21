@@ -1,5 +1,13 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial, Vector3 } from "@babylonjs/core";
-import { DESPAWN_Z, EDGE_ANGLE_EPSILON, PLAYER_RADIUS, SPAWN_Z, randomLaneX } from "./constants";
+import {
+  CROSS_TYPE_MIN_GAP,
+  DESPAWN_Z,
+  EDGE_ANGLE_EPSILON,
+  PLAYER_RADIUS,
+  SPAWN_Z,
+  pickClearLaneX,
+  randomLaneX,
+} from "./constants";
 import { settings } from "../settings";
 
 const OBSTACLE_COUNT = 8;
@@ -53,20 +61,26 @@ export class ObstacleField {
     }
   }
 
+  // The current world position of every active obstacle, so other systems can avoid overlapping them.
+  get positions(): Vector3[] {
+    return this.obstacles.map((obstacle) => obstacle.position);
+  }
+
   /**
    * Scrolls obstacles toward the player, recycles passed ones, and reports any collision.
    * @param deltaSeconds - Time elapsed since the last frame, in seconds.
    * @param speed - Current forward speed in units per second.
    * @param playerPosition - The player mesh's current world position.
+   * @param gemPositions - Current gem positions, avoided when recycling an obstacle to a new lane.
    */
-  update(deltaSeconds: number, speed: number, playerPosition: Vector3): boolean {
+  update(deltaSeconds: number, speed: number, playerPosition: Vector3, gemPositions: Vector3[]): boolean {
     const step = speed * deltaSeconds;
     let collided = false;
     for (const obstacle of this.obstacles) {
       obstacle.position.z -= step;
       if (obstacle.position.z < DESPAWN_Z) {
         obstacle.position.z = this.nextSpawnZ;
-        obstacle.position.x = randomLaneX();
+        obstacle.position.x = pickClearLaneX(this.nextSpawnZ, gemPositions, CROSS_TYPE_MIN_GAP);
         this.nextSpawnZ += randomGap();
       }
       if (!collided && this.isColliding(obstacle.position, playerPosition)) {

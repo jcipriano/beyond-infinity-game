@@ -1,10 +1,13 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
-import { DESPAWN_Z, EDGE_ANGLE_EPSILON, GROUND_ALPHA_INDEX } from "./constants";
+import { DESPAWN_Z, EDGE_ANGLE_EPSILON, GROUND_ALPHA_INDEX, LANE_BOUNDARIES } from "./constants";
 import { settings } from "../settings";
 
 const TILE_LENGTH = 40;
-const TILE_WIDTH = 12;
+const TILE_WIDTH = LANE_BOUNDARIES[LANE_BOUNDARIES.length - 1] - LANE_BOUNDARIES[0];
 const TILE_COUNT = 16;
+
+const LANE_LINE_WIDTH = 0.06;
+const LANE_LINE_HEIGHT = 0.02;
 
 export class Track {
   private readonly tiles: Mesh[] = [];
@@ -20,6 +23,11 @@ export class Track {
     material.specularColor = Color3.Black();
     material.alpha = settings.wireframe ? settings.opacity : 1;
 
+    const laneLineMaterial = new StandardMaterial("laneLineMat", scene);
+    laneLineMaterial.emissiveColor = Color3.White();
+    laneLineMaterial.disableLighting = true;
+    laneLineMaterial.alpha = 0.5;
+
     for (let i = 0; i < TILE_COUNT; i++) {
       const tile = MeshBuilder.CreateGround(`tile${i}`, { width: TILE_WIDTH, height: TILE_LENGTH }, scene);
       tile.material = material;
@@ -31,6 +39,17 @@ export class Track {
         tile.edgesColor.set(color.r, color.g, color.b, 1);
       }
       this.tiles.push(tile);
+
+      for (const boundaryX of LANE_BOUNDARIES) {
+        const laneLine = MeshBuilder.CreateGround(
+          `tile${i}laneLine${boundaryX}`,
+          { width: LANE_LINE_WIDTH, height: TILE_LENGTH },
+          scene
+        );
+        laneLine.material = laneLineMaterial;
+        laneLine.parent = tile;
+        laneLine.position.set(boundaryX, LANE_LINE_HEIGHT, 0);
+      }
     }
   }
 

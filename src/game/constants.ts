@@ -1,6 +1,15 @@
+import { Vector3 } from "@babylonjs/core";
+
 export const LANE_COUNT = 3;
 export const LANE_WIDTH = 3;
 export const LANE_X_POSITIONS = [-LANE_WIDTH, 0, LANE_WIDTH];
+
+// The x position of every lane boundary, including the outer edges of the leftmost/rightmost lanes,
+// so all lanes are striped to the same width. Used to draw lane dividers.
+export const LANE_BOUNDARIES = Array.from(
+  { length: LANE_COUNT + 1 },
+  (_, i) => LANE_X_POSITIONS[0] - LANE_WIDTH / 2 + i * LANE_WIDTH
+);
 
 export const GROUND_Y = 0;
 export const PLAYER_RADIUS = 0.7;
@@ -31,4 +40,22 @@ export const GROUND_ALPHA_INDEX = 0;
 export function randomLaneX(): number {
   const index = Math.floor(Math.random() * LANE_X_POSITIONS.length);
   return LANE_X_POSITIONS[index];
+}
+
+// Minimum z distance required between an obstacle and a gem sharing a lane, so their meshes never overlap.
+export const CROSS_TYPE_MIN_GAP = 3;
+
+/**
+ * Picks a lane x position at the given z that isn't already occupied (within minGap) by another
+ * lane-based object, so obstacles and gems never spawn overlapping each other.
+ * @param z - The z position the new object will spawn at.
+ * @param others - Positions of the other object type's currently active instances.
+ * @param minGap - Minimum z separation required to consider a lane clear at this z.
+ */
+export function pickClearLaneX(z: number, others: Vector3[], minGap: number): number {
+  const clearLanes = LANE_X_POSITIONS.filter((x) =>
+    others.every((other) => Math.abs(other.x - x) > 0.01 || Math.abs(other.z - z) >= minGap)
+  );
+  const candidates = clearLanes.length > 0 ? clearLanes : LANE_X_POSITIONS;
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
