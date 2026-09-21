@@ -13,12 +13,15 @@ import {
 import { settings } from "../settings";
 
 const START_LANE = 1;
+const SWIPE_THRESHOLD_PX = 30;
 
 export class Player {
   readonly mesh: Mesh;
   private laneIndex = START_LANE;
   private verticalVelocity = 0;
   private grounded = true;
+  private touchStartX: number | null = null;
+  private touchStartY: number | null = null;
 
   /**
    * Creates the player sphere in the center lane and wires up lane/jump input.
@@ -41,6 +44,8 @@ export class Player {
     }
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event.key.toLowerCase()));
+    window.addEventListener("touchstart", (event) => this.handleTouchStart(event));
+    window.addEventListener("touchend", (event) => this.handleTouchEnd(event));
   }
 
   // Returns the player to the starting lane and grounded state for a new run.
@@ -79,6 +84,35 @@ export class Player {
     if (key === "a" || key === "arrowleft") this.changeLane(-1);
     if (key === "d" || key === "arrowright") this.changeLane(1);
     if (key === " " || key === "w" || key === "arrowup") this.jump();
+  }
+
+  /**
+   * Records where a touch began, so touchend can measure the swipe distance/direction.
+   * @param event - The touchstart event.
+   */
+  private handleTouchStart(event: TouchEvent): void {
+    const touch = event.touches[0];
+    this.touchStartX = touch.clientX;
+    this.touchStartY = touch.clientY;
+  }
+
+  /**
+   * Maps a completed swipe to a lane change or jump, based on its dominant direction and length.
+   * @param event - The touchend event.
+   */
+  private handleTouchEnd(event: TouchEvent): void {
+    if (this.touchStartX === null || this.touchStartY === null) return;
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - this.touchStartX;
+    const deltaY = touch.clientY - this.touchStartY;
+    this.touchStartX = null;
+    this.touchStartY = null;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) this.changeLane(deltaX > 0 ? 1 : -1);
+    } else {
+      if (deltaY <= -SWIPE_THRESHOLD_PX) this.jump();
+    }
   }
 
   /**

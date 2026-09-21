@@ -21,3 +21,13 @@ testMode:
 Use this whenever manually verifying a change would otherwise mean waiting on luck (surviving to a gem, avoiding/hitting an obstacle on demand, inspecting a frozen post-collision scene). Turn it off (`enabled: false`) before considering a task done — it must never be left on as the shipped default.
 
 If a future testing need doesn't fit this (e.g. isolating a specific obstacle/gem index, freezing world scroll, forcing a specific lane), it's reasonable to extend `testMode` further rather than resorting to ad hoc throwaway edits.
+
+## Testing on an iPad/iPhone
+
+The dev server (`.claude/launch.json`'s `dev` config) runs `vite --host` so it's reachable from other devices on the same network, not just localhost. To test on an iPad/iPhone:
+
+1. Start/restart the `dev` preview server (stop it first if already running without `--host`).
+2. Read its logs (`preview_logs`) for the printed `Network:` URL (e.g. `http://192.168.x.x:5173/`).
+3. Have the device join the same Wi-Fi network and open that URL in Safari.
+
+If it doesn't connect: macOS may need to allow incoming connections for `node` (System Settings prompt or Firewall settings), or the router may have client/AP isolation enabled.
