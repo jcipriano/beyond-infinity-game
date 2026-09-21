@@ -11,6 +11,9 @@ interface Settings {
   wireframe: boolean;
   opacity: number;
   edgeWidth: number;
+  baseSpeed: number;
+  maxSpeed: number;
+  speedRamp: number;
   testMode: TestModeSettings;
 }
 

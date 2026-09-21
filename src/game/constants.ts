@@ -19,10 +19,6 @@ export const JUMP_SPEED = 11;
 export const LANE_LERP_SPEED = 12;
 export const ROLL_VISUAL_DAMPING = 0.35;
 
-export const BASE_SPEED = 12;
-export const MAX_SPEED = 28;
-export const SPEED_RAMP = 0.15;
-
 export const SPAWN_Z = 60;
 export const DESPAWN_Z = -6;
 

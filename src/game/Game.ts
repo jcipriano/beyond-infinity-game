@@ -1,7 +1,6 @@
 import { Color4, Engine, HemisphericLight, Scene, Vector3 } from "@babylonjs/core";
 import { ChaseCamera } from "./ChaseCamera";
 import { CollectibleField } from "./Collectibles";
-import { BASE_SPEED, MAX_SPEED, SPEED_RAMP } from "./constants";
 import { Explosion } from "./Explosion";
 import { ObstacleField } from "./Obstacles";
 import { Player } from "./Player";
@@ -27,6 +26,7 @@ export class Game {
 
   private readonly scoreLabel = document.getElementById("score");
   private readonly timerLabel = document.getElementById("timer");
+  private readonly speedLabel = document.getElementById("speed");
   private readonly gameOverOverlay = document.getElementById("gameOver");
   private readonly finalScoreLabel = document.getElementById("finalScore");
 
@@ -86,8 +86,9 @@ export class Game {
   private update(deltaSeconds: number): void {
     this.elapsedSeconds += deltaSeconds;
     this.updateTimerLabel();
-    const speed = Math.min(BASE_SPEED + this.elapsedSeconds * SPEED_RAMP, MAX_SPEED);
+    const speed = Math.min(settings.baseSpeed + this.elapsedSeconds * settings.speedRamp, settings.maxSpeed);
     this.distance += speed * deltaSeconds;
+    this.updateSpeedLabel(speed);
 
     this.player.update(deltaSeconds, speed);
     this.starField.update(deltaSeconds, speed);
@@ -121,6 +122,15 @@ export class Game {
     this.timerLabel.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}.${tenths}`;
   }
 
+  /**
+   * Renders the current forward speed into the HUD.
+   * @param speed - Current forward speed in units per second.
+   */
+  private updateSpeedLabel(speed: number): void {
+    if (!this.speedLabel) return;
+    this.speedLabel.textContent = `Speed: ${Math.round(speed)}`;
+  }
+
   // Switches to the game-over state and shatters the player, revealing the overlay after a delay.
   private endRun(): void {
     this.state = "gameover";
@@ -143,6 +153,7 @@ export class Game {
     this.gemScore = 0;
     this.updateScoreLabel();
     this.updateTimerLabel();
+    this.updateSpeedLabel(settings.baseSpeed);
     this.gameOverOverlay?.classList.add("hidden");
 
     this.player.reset();
