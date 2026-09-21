@@ -65,6 +65,14 @@ export class ObstacleField {
     }
   }
 
+  /**
+   * Shows or hides every obstacle, without affecting their positions or spawn scheduling.
+   * @param visible - Whether the obstacles should be visible.
+   */
+  setVisible(visible: boolean): void {
+    for (const obstacle of this.obstacles) obstacle.isVisible = visible;
+  }
+
   // The current world position of every active obstacle, so other systems can avoid overlapping them.
   get positions(): Vector3[] {
     return this.obstacles.map((obstacle) => obstacle.position);

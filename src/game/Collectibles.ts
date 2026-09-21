@@ -63,6 +63,14 @@ export class CollectibleField {
   }
 
   /**
+   * Shows or hides every gem, without affecting their positions or spawn scheduling.
+   * @param visible - Whether the gems should be visible.
+   */
+  setVisible(visible: boolean): void {
+    for (const gem of this.gems) gem.isVisible = visible;
+  }
+
+  /**
    * Scrolls and spins gems toward the player, collecting or recycling each as it passes.
    * @param deltaSeconds - Time elapsed since the last frame, in seconds.
    * @param speed - Current forward speed in units per second.

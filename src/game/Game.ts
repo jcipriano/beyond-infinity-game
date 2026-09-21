@@ -39,6 +39,7 @@ export class Game {
   private readonly startButton = document.getElementById("startButton");
 
   private state: RunState = "intro";
+  private previewStarted = false;
   private elapsedSeconds = 0;
   private distance = 0;
   private gemScore = 0;
@@ -65,6 +66,10 @@ export class Game {
     const spawnGems = !settings.testMode.enabled || settings.testMode.spawn !== "obstacles";
     this.obstacles = spawnObstacles ? new ObstacleField(this.scene) : null;
     this.collectibles = spawnGems ? new CollectibleField(this.scene, this.obstacles?.positions ?? []) : null;
+    // Obstacles/gems stay hidden until the run actually starts, so the intro/countdown preview
+    // shows an empty track.
+    this.obstacles?.setVisible(false);
+    this.collectibles?.setVisible(false);
     this.camera = new ChaseCamera(this.scene);
     // Orients the camera correctly right away, so it doesn't snap into place when gameplay
     // starts after sitting at its default orientation through the intro/countdown screens.
@@ -79,8 +84,13 @@ export class Game {
 
     window.addEventListener("resize", () => this.engine.resize());
     window.addEventListener("keydown", (event) => {
-      if (event.key.toLowerCase() !== "r") return;
-      if (this.state === "gameover" && !this.gameOverOverlay?.classList.contains("hidden")) this.restart();
+      const key = event.key.toLowerCase();
+      if (key === "r" && this.state === "gameover" && !this.gameOverOverlay?.classList.contains("hidden")) {
+        this.restart();
+      }
+      if (key === "enter" && this.state === "intro" && !this.startButton?.classList.contains("hidden")) {
+        this.beginCountdown();
+      }
     });
     document.getElementById("restartButton")?.addEventListener("click", () => this.restart());
     this.startButton?.addEventListener("click", () => this.beginCountdown());
@@ -91,9 +101,22 @@ export class Game {
     this.engine.runRenderLoop(() => {
       const deltaSeconds = Math.min(this.engine.getDeltaTime() / 1000, 0.1);
       if (this.state === "running") this.update(deltaSeconds);
+      else if (this.previewStarted && this.state !== "gameover") this.updatePreview(deltaSeconds);
       this.explosion.update(deltaSeconds);
       this.scene.render();
     });
+  }
+
+  /**
+   * Animates the rolling player, scrolling track, and starfield at the base speed, without
+   * advancing the timer/score or spawning obstacles/gems, for the intro/countdown screens.
+   * @param deltaSeconds - Time elapsed since the last frame, in seconds.
+   */
+  private updatePreview(deltaSeconds: number): void {
+    this.player.update(deltaSeconds, settings.baseSpeed);
+    this.starField.update(deltaSeconds, settings.baseSpeed);
+    this.track.update(deltaSeconds, settings.baseSpeed);
+    this.camera.update(this.player.mesh.position, deltaSeconds);
   }
 
   /**
@@ -162,6 +185,7 @@ export class Game {
   private showStartButton(): void {
     this.introStatusLabel?.classList.add("hidden");
     this.startButton?.classList.remove("hidden");
+    this.previewStarted = true;
   }
 
   // Starts the pre-game countdown once the player clicks Start.
@@ -183,6 +207,8 @@ export class Game {
     if (this.countdownRemaining <= 0) {
       window.clearInterval(this.countdownIntervalId);
       this.introOverlay?.classList.add("hidden");
+      this.obstacles?.setVisible(true);
+      this.collectibles?.setVisible(true);
       this.state = "running";
       return;
     }
