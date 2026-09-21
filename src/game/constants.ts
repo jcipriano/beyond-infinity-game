@@ -15,7 +15,7 @@ export const GROUND_Y = 0;
 export const PLAYER_RADIUS = 0.7;
 
 export const GRAVITY = -30;
-export const JUMP_SPEED = 11;
+export const JUMP_SPEED = 12.5;
 export const LANE_LERP_SPEED = 12;
 export const ROLL_VISUAL_DAMPING = 0.35;
 
