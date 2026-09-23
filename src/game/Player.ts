@@ -14,6 +14,7 @@ import { settings } from "../settings";
 
 const START_LANE = 1;
 const SWIPE_THRESHOLD_PX = 30;
+const TAP_MOVE_THRESHOLD_PX = 10;
 
 export class Player {
   readonly mesh: Mesh;
@@ -97,18 +98,25 @@ export class Player {
   }
 
   /**
-   * Maps a completed swipe to a lane change or jump, based on its dominant direction and length.
+   * Maps a completed touch to a lane change or jump: a short tap changes lane toward whichever
+   * side of the screen it landed on, while a longer swipe is mapped by its dominant direction and
+   * length, same as before.
    * @param event - The touchend event.
    */
   private handleTouchEnd(event: TouchEvent): void {
     if (this.touchStartX === null || this.touchStartY === null) return;
     const touch = event.changedTouches[0];
+    const startX = this.touchStartX;
     const deltaX = touch.clientX - this.touchStartX;
     const deltaY = touch.clientY - this.touchStartY;
     this.touchStartX = null;
     this.touchStartY = null;
 
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (event.target instanceof HTMLElement && event.target.closest("button")) return;
+
+    if (Math.hypot(deltaX, deltaY) < TAP_MOVE_THRESHOLD_PX) {
+      this.changeLane(startX < window.innerWidth / 2 ? -1 : 1);
+    } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
       if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) this.changeLane(deltaX > 0 ? 1 : -1);
     } else {
       if (deltaY <= -SWIPE_THRESHOLD_PX) this.jump();
