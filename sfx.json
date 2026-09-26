@@ -1,0 +1,21 @@
+{
+  "music": {
+    "tiers": [
+      { "file": "/sounds/background-00.mp3", "threshold": 0 },
+      { "file": "/sounds/background-01.mp3", "threshold": 3000 },
+      { "file": "/sounds/background-02.mp3", "threshold": 4000 },
+      { "file": "/sounds/background-03.mp3", "threshold": 5000 }
+    ],
+    "volume": "music"
+  },
+  "gemPickup": {
+    "file": "/sounds/gem-collect.mp3",
+    "volume": "sfx",
+    "essential": true
+  },
+  "obstacleCollision": {
+    "file": "/sounds/game-over.mp3",
+    "volume": "sfx",
+    "essential": true
+  }
+}

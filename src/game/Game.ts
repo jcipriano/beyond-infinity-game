@@ -168,6 +168,7 @@ export class Game {
       this.scorePopups.show(position, `-${BREAKABLE_OBSTACLE_PENALTY}`, NEGATIVE_POPUP_COLOR);
     }
     this.updateScoreLabel();
+    this.sound.updateMusicScore(this.score);
     this.updateGemCountLabel();
     if (gemsCollectedPositions.length > 0) this.sound.playGemPickup();
 
